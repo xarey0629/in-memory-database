@@ -1,0 +1,1 @@
+SELECT * FROM Reserves WHERE Reserves.G = 1 AND Reserves.H <= 103

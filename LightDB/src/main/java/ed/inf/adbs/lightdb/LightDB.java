@@ -22,8 +22,12 @@ public class LightDB {
 		String inputFile = args[1];
 		String outputFile = args[2];
 
+		SQLInterpreter sqlInterpreter = new SQLInterpreter(databaseDir, inputFile, outputFile);
+		sqlInterpreter.interpret();
+
+
 		// Just for demonstration, replace this function call with your logic
-		parsingExample(inputFile);
+//		parsingExample(inputFile);
 	}
 
 	/**
