@@ -23,8 +23,23 @@ public class MyExpressionDeParser extends ExpressionDeParser {
      * @param tuple
      */
     MyExpressionDeParser(Tuple tuple){
+        this.isJoin = false;
         this.tuple = tuple;
-//        this.isJoin = false;
+    }
+
+    /**
+     * Constructor for Join Operator
+     * @param leftTuple
+     * @param rightTuple
+     * @param leftTables
+     * @param rightTable
+     */
+    MyExpressionDeParser(Tuple leftTuple, Tuple rightTuple, String[] leftTables, String rightTable){
+        this.isJoin = true;
+        this.tuple = leftTuple;
+        this.rightTuple = rightTuple;
+        this.leftTables = leftTables;
+        this.rightTable = rightTable;
     }
 
     @Override
@@ -44,14 +59,14 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
         long lvalue = queueValue.poll();
         long rvalue = queueValue.poll();
-        queueBoolean.offer(lvalue == rvalue);
 
-//        if (lvalue == Long.MIN_VALUE || rvalue == Long.MIN_VALUE){
-//            queueBoolean.offer(true);
-//        }
-//        else {
-//            queueBoolean.offer(value1 == value2);
-//        }
+
+        if (lvalue == Long.MIN_VALUE || rvalue == Long.MIN_VALUE){
+            queueBoolean.offer(true);
+        }
+        else {
+            queueBoolean.offer(lvalue == rvalue);
+        }
     }
 
     @Override
@@ -61,7 +76,12 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
         long lvalue = queueValue.poll();
         long rvalue = queueValue.poll();
-        queueBoolean.offer(lvalue == rvalue);
+        if (lvalue == Long.MIN_VALUE || rvalue == Long.MIN_VALUE){
+            queueBoolean.offer(true);
+        }
+        else {
+            queueBoolean.offer(lvalue != rvalue);
+        }
     }
 
     @Override
@@ -71,14 +91,13 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
         long lvalue = queueValue.poll();
         long rvalue = queueValue.poll();
-        queueBoolean.offer(lvalue > rvalue);
 
-//        if (value1 == Long.MIN_VALUE || value2 == Long.MIN_VALUE){
-//            queueBoolean.offer(true);
-//        }
-//        else {
-//            queueBoolean.offer(value1 > value2);
-//        }
+        if (lvalue == Long.MIN_VALUE || rvalue == Long.MIN_VALUE){
+            queueBoolean.offer(true);
+        }
+        else {
+            queueBoolean.offer(lvalue > rvalue);
+        }
     }
 
     @Override
@@ -89,14 +108,14 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
         long lvalue = queueValue.poll();
         long rvalue = queueValue.poll();
-        queueBoolean.offer(lvalue >= rvalue);
 
-//        if (value1 == Long.MIN_VALUE || value2 == Long.MIN_VALUE){
-//            queueBoolean.offer(true);
-//        }
-//        else {
-//            queueBoolean.offer(value1 >= value2);
-//        }
+        if (lvalue == Long.MIN_VALUE || rvalue == Long.MIN_VALUE){
+            queueBoolean.offer(true);
+        }
+        else {
+            queueBoolean.offer(lvalue >= rvalue);
+        }
+
     }
 
     @Override
@@ -106,14 +125,13 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
         long lvalue = queueValue.poll();
         long rvalue = queueValue.poll();
-        queueBoolean.offer(lvalue < rvalue);
 
-//        if (value1 == Long.MIN_VALUE || value2 == Long.MIN_VALUE){
-//            queueBoolean.offer(true);
-//        }
-//        else {
-//            queueBoolean.offer(value1 < value2);
-//        }
+        if (lvalue == Long.MIN_VALUE || rvalue == Long.MIN_VALUE){
+            queueBoolean.offer(true);
+        }
+        else {
+            queueBoolean.offer(lvalue < rvalue);
+        }
     }
 
     @Override
@@ -124,14 +142,13 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
         long lvalue = queueValue.poll();
         long rvalue = queueValue.poll();
-        queueBoolean.offer(lvalue <= rvalue);
 
-//        if (value1 == Long.MIN_VALUE || value2 == Long.MIN_VALUE){
-//            queueBoolean.offer(true);
-//        }
-//        else {
-//            queueBoolean.offer(value1 <= value2);
-//        }
+        if (lvalue == Long.MIN_VALUE || rvalue == Long.MIN_VALUE){
+            queueBoolean.offer(true);
+        }
+        else {
+            queueBoolean.offer(lvalue <= rvalue);
+        }
     }
 
     @Override
@@ -145,10 +162,19 @@ public class MyExpressionDeParser extends ExpressionDeParser {
     public void visit(Column column){
         System.out.println("Visit Column: " + column.toString());
         super.visit(column);
-        String table = column.getTable().getName();
-        String col = column.getColumnName();
+//        String table = column.getTable().getName();
+//        String col = column.getColumnName();
+        // TODO: Join Conditions
+        String key = column.toString();
+        if(isJoin){
+            if(rightTuple.tuple.containsKey(key)) queueValue.offer(rightTuple.tuple.get(key).getValue());
+            else if(tuple.tuple.containsKey(key)) queueValue.offer(tuple.tuple.get(key).getValue());
+            else queueValue.offer(Long.MIN_VALUE);
+        }else{
+            if(tuple.tuple.containsKey(key)) queueValue.offer(this.tuple.tuple.get(key).getValue());
+            else queueValue.offer(Long.MIN_VALUE);
+        }
 
-        queueValue.offer(this.tuple.tuple.get(table + "." + col).getValue());
 
     }
 

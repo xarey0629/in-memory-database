@@ -40,6 +40,21 @@ public class Tuple {
         }
     }
 
+    Tuple(LinkedHashMap<String,LongValue> joinedTuple){
+        this.tuple = joinedTuple;
+    }
+
+    public Tuple join(Tuple rightTuple){
+        LinkedHashMap<String, LongValue> joinedTuple = new LinkedHashMap<String, LongValue>(this.tuple);
+        for(String key:rightTuple.tuple.keySet()){
+            LongValue longValue = rightTuple.tuple.get(key);
+            joinedTuple.put(key, longValue);
+//            System.out.printf("Join K/V: %s / %d \n", key, longValue.getValue());
+        }
+//        System.out.println(printTuple());
+        return new Tuple(joinedTuple);
+    }
+
     /**
      * Print the content of this tuple.
      * @return A csv-like string.

@@ -47,14 +47,11 @@ public class SelectOperator extends Operator{
 
 
 
-    // TODO:
     public boolean examineTuple(Tuple tuple, Expression whereExpression){
-        // TODO
         MyExpressionDeParser myExpressionDeParser = new MyExpressionDeParser(tuple);
         StringBuilder stringBuilder = new StringBuilder();
         myExpressionDeParser.setBuffer(stringBuilder);
         whereExpression.accept(myExpressionDeParser);
-        // TODO
         return myExpressionDeParser.examine();
     }
 

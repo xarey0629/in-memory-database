@@ -55,26 +55,34 @@ public class SQLInterpreter {
                  * Get Where Items
                  * plainSelect.getWhere() -> Expression
                  */
+                // Get Selected Attributes
                 String[] selectItems = ArrListToStringArr((ArrayList)plainSelect.getSelectItems());
+                // Get all Table Names.
                 String table = plainSelect.getFromItem().toString();
+                String[] leftTableNames = ArrListToStringArr((ArrayList)plainSelect.getJoins());
+                // Get WHERE expression.
+                Expression whereExpression = plainSelect.getWhere();
 
                 // Test Scan.
 //                Operator operator = new ScanOperator(this.dbPath, this.schema, table);
 //                ArrayList<Tuple> tuples = operator.dump();
 
                 // Test Select
-                Expression whereExpression = plainSelect.getWhere();
 
 //                Operator operator = new SelectOperator(this.dbPath, this.schema, table, whereExpression);
-//                ArrayList<Tuple> tuples = selectOperator.dump();
+//                ArrayList<Tuple> tuples = Operator.dump();
 
-                // TODO: Test ProjectOperator
-                Operator operator = new ProjectOperator(this.dbPath, this.schema, table, selectItems, whereExpression);
-                ArrayList<Tuple> tuples = operator.dump();
+                // Test ProjectOperator
+//                Operator operator = new ProjectOperator(this.dbPath, this.schema, table, selectItems, whereExpression);
+//                ArrayList<Tuple> tuples = operator.dump();
 
                 // TODO: Decide when to use ScanOperator, SelectOperator or ProjectOperator.
                 // TODO: selectItems = null if Select *
                 // TODO: whereExpression = null if no WHERE clause
+
+                // Test JoinOperator
+                Operator operator = new JoinOperator(this.dbPath, this.schema, table, leftTableNames, whereExpression);
+                ArrayList<Tuple> tuples = operator.dump();
 
                 writeFile(outputFile, tuples);
 
