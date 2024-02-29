@@ -1,0 +1,1 @@
+SELECT Reserves.G, Reserves.H FROM Reserves WHERE Reserves.H <= 102

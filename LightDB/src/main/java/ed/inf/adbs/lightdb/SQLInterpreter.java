@@ -13,6 +13,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 
 public class SQLInterpreter {
@@ -20,6 +21,7 @@ public class SQLInterpreter {
     String inputFile;
     String outputFile;
     HashMap<String, String[]> schema;
+    boolean isScan = false;
 
     /**
      * Basic constructor.
@@ -42,31 +44,38 @@ public class SQLInterpreter {
             if (statement != null) {
                 System.out.println("Read statement: " + statement);
                 Select select = (Select) statement;
-                System.out.println("Select body is " + select.getSelectBody());
-
                 PlainSelect plainSelect = (PlainSelect) select.getPlainSelect();
+
+                parseSchema(this.dbPath);
                 /**
                  * Get Select Items
-                 * plainSelect.getSelectItem(indices)
+                 * plainSelect.getSelectItems()
                  * Get From Items
                  * plainSelect.getFromItem().toString()
                  * Get Where Items
                  * plainSelect.getWhere() -> Expression
                  */
-
+                String[] selectItems = ArrListToStringArr((ArrayList)plainSelect.getSelectItems());
                 String table = plainSelect.getFromItem().toString();
-//                System.out.println("The table is " + table);
-
-                parseSchema(this.dbPath);
 
                 // Test Scan.
 //                Operator operator = new ScanOperator(this.dbPath, this.schema, table);
 //                ArrayList<Tuple> tuples = operator.dump();
 
-                // TODO: Test Select
+                // Test Select
                 Expression whereExpression = plainSelect.getWhere();
-                Operator selectOperator = new SelectOperator(this.dbPath, this.schema, table, whereExpression);
-                ArrayList<Tuple> tuples = selectOperator.dump();
+
+//                Operator operator = new SelectOperator(this.dbPath, this.schema, table, whereExpression);
+//                ArrayList<Tuple> tuples = selectOperator.dump();
+
+                // TODO: Test ProjectOperator
+                Operator operator = new ProjectOperator(this.dbPath, this.schema, table, selectItems, whereExpression);
+                ArrayList<Tuple> tuples = operator.dump();
+
+                // TODO: Decide when to use ScanOperator, SelectOperator or ProjectOperator.
+                // TODO: selectItems = null if Select *
+                // TODO: whereExpression = null if no WHERE clause
+
                 writeFile(outputFile, tuples);
 
             }
@@ -96,6 +105,22 @@ public class SQLInterpreter {
         catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Transfer Select Items to String[]
+     * @param arrList
+     * @return String[]
+     */
+    public String[] ArrListToStringArr(ArrayList arrList){
+        if(arrList.size() == 0) return null;
+        if(arrList.get(0) == "*") return null;
+
+        String[] strArr = new String[arrList.size()];
+        for(int i = 0; i < arrList.size(); i++){
+            strArr[i] = arrList.get(i).toString();
+        }
+        return strArr;
     }
 
     public void writeFile(String outputFile, ArrayList<Tuple> tuples){

@@ -29,7 +29,7 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
     @Override
     public void visit(AndExpression andExpression){
-        System.out.println("Visit: AndExpression " + andExpression.toString());
+        System.out.println("Visit AndExpression: " + andExpression.toString());
 
         super.visit(andExpression);
         boolean expr1 = queueBoolean.poll();
@@ -39,7 +39,7 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
     @Override
     public void visit(EqualsTo equalsTo){
-        System.out.println("Visit: EqualsTo " + equalsTo.toString());
+        System.out.println("Visit EqualsTo: " + equalsTo.toString());
         super.visit(equalsTo);
 
         long lvalue = queueValue.poll();
@@ -56,7 +56,7 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
     @Override
     public void visit(NotEqualsTo notEqualsTo){
-        System.out.println("Visit: NotEqualsTo " + notEqualsTo.toString());
+        System.out.println("Visit NotEqualsTo: " + notEqualsTo.toString());
         super.visit(notEqualsTo);
 
         long lvalue = queueValue.poll();
@@ -66,7 +66,7 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
     @Override
     public void visit(GreaterThan greaterThan){
-        System.out.println("Visit: GreaterThan " + greaterThan.toString());
+        System.out.println("Visit GreaterThan: " + greaterThan.toString());
         super.visit(greaterThan);
 
         long lvalue = queueValue.poll();
@@ -83,7 +83,7 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
     @Override
     public void visit(GreaterThanEquals greaterThanEquals){
-        System.out.println("Visit: GreaterThanEquals " + greaterThanEquals.toString());
+        System.out.println("Visit GreaterThanEquals: " + greaterThanEquals.toString());
 
         super.visit(greaterThanEquals);
 
@@ -101,7 +101,7 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
     @Override
     public void visit(MinorThan minorThan){
-        System.out.println("Visit: MinorThan " + minorThan.toString());
+        System.out.println("Visit MinorThan: " + minorThan.toString());
         super.visit(minorThan);
 
         long lvalue = queueValue.poll();
@@ -118,7 +118,7 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
     @Override
     public void visit(MinorThanEquals minorThanEquals){
-        System.out.println("Visit: MinorThanEquals " + minorThanEquals.toString());
+        System.out.println("Visit MinorThanEquals: " + minorThanEquals.toString());
 
         super.visit(minorThanEquals);
 
@@ -136,20 +136,19 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
     @Override
     public void visit(LongValue longValue){
-        System.out.println("Visit: LongValue " + longValue.toString());
+        System.out.println("Visit LongValue: " + longValue.toString());
         super.visit(longValue);
         queueValue.offer(longValue.getValue());
     }
 
     @Override
     public void visit(Column column){
-        System.out.println("Visit: Column " + column.toString());
+        System.out.println("Visit Column: " + column.toString());
         super.visit(column);
         String table = column.getTable().getName();
         String col = column.getColumnName();
-        System.out.println("Table: " + table + ", Column: " + col);
 
-        queueValue.offer(this.tuple.tuple.get(table+col).getValue());
+        queueValue.offer(this.tuple.tuple.get(table + "." + col).getValue());
 
     }
 
