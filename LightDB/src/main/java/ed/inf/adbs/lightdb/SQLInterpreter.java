@@ -20,8 +20,21 @@ public class SQLInterpreter {
     String dbPath;
     String inputFile;
     String outputFile;
-    HashMap<String, String[]> schema;
-    boolean isScan = false;
+    /**
+     * Schema use hash map DS to store TableName/An array of Attributes paris.
+     * For example: schema.get("Sailors") = {A, B, C}
+     */
+    HashMap<String, String[]> schema = null;
+    public static boolean hasAlias = false;
+
+    /**
+     * Used to find real table names by aliases.
+     * For example: aliasToTable.get("S") = "Sailors"
+     */
+    public static HashMap<String, String> aliasToTable = new HashMap<String, String>();
+
+    String sumExpression = null;
+
 
     /**
      * Basic constructor.
@@ -39,14 +52,11 @@ public class SQLInterpreter {
         // Modified from example function: parsingExample()
         try {
             Statement statement = CCJSqlParserUtil.parse(new FileReader(inputFile));
-
 //            Statement statement = CCJSqlParserUtil.parse("SELECT * FROM Sailors");
             if (statement != null) {
                 System.out.println("Read statement: " + statement);
                 Select select = (Select) statement;
                 PlainSelect plainSelect = (PlainSelect) select.getPlainSelect();
-
-                parseSchema(this.dbPath);
                 /**
                  * Get Select Items
                  * plainSelect.getSelectItems()
@@ -55,37 +65,62 @@ public class SQLInterpreter {
                  * Get Where Items
                  * plainSelect.getWhere() -> Expression
                  */
+                // Read and Load Schema
+                parseSchema(this.dbPath);
                 // Get Selected Attributes
-                String[] selectItems = ArrListToStringArr((ArrayList)plainSelect.getSelectItems());
+                String[] selectItems = checkStarAndSumThenGetSelectItems((ArrayList)plainSelect.getSelectItems());
+
                 // Get all Table Names.
                 String table = plainSelect.getFromItem().toString();
                 String[] leftTableNames = ArrListToStringArr((ArrayList)plainSelect.getJoins());
                 // Get WHERE expression.
                 Expression whereExpression = plainSelect.getWhere();
+                // Get ORDER BY elements
+                String[] orderByColumns = ArrListToStringArr((ArrayList)plainSelect.getOrderByElements());
+                // Get DISTINCT elements
+                boolean isDistinct = hasDistinct(plainSelect.getDistinct());
+                // Get GROUP BY elements
+                String[] groupByColumns = ArrListToStringArr((ArrayList)plainSelect.getGroupBy().getGroupByExpressionList());
 
-                // Test Scan.
+                // Test Select & Aliases
+                this.hasAlias = isHasAlias(table, leftTableNames);
+                if(hasAlias){
+                    // TODO:
+                    //  1. Update schema with aliases.
+                    //  2. Update names of tables.
+                    updateSchemaWithAliases(table, leftTableNames);
+                    table = getTableAlias(table);
+                    if(leftTableNames.length >= 1){
+                        leftTableNames = getJoinTableAliases(leftTableNames);
+                    }
+
+                }
 //                Operator operator = new ScanOperator(this.dbPath, this.schema, table);
-//                ArrayList<Tuple> tuples = operator.dump();
-
-                // Test Select
-
 //                Operator operator = new SelectOperator(this.dbPath, this.schema, table, whereExpression);
-//                ArrayList<Tuple> tuples = Operator.dump();
 
                 // Test ProjectOperator
+//                Operator operator = new ProjectOperator(this.dbPath, this.schema, table, selectItems);
 //                Operator operator = new ProjectOperator(this.dbPath, this.schema, table, selectItems, whereExpression);
-//                ArrayList<Tuple> tuples = operator.dump();
 
                 // TODO: Decide when to use ScanOperator, SelectOperator or ProjectOperator.
                 // TODO: selectItems = null if Select *
                 // TODO: whereExpression = null if no WHERE clause
 
                 // Test JoinOperator
-                Operator operator = new JoinOperator(this.dbPath, this.schema, table, leftTableNames, whereExpression);
+//                Operator operator = new JoinOperator(this.dbPath, this.schema, table, leftTableNames, whereExpression);
+
+                // Test Sort Operator
+//                Operator operator = new SortOperator(this.dbPath, this.schema, table, leftTableNames, selectItems, whereExpression, orderByColumns);
+
+                // Test DuplicateEliminationOperator
+                Operator operator = new DuplicateEliminationOperator(this.dbPath, this.schema, table, leftTableNames, selectItems, whereExpression, orderByColumns, isDistinct);
+
+                // Test SumOperator
+//                Operator operator = ...
+
+                // Write Output File
                 ArrayList<Tuple> tuples = operator.dump();
-
                 writeFile(outputFile, tuples);
-
             }
         } catch (Exception e) {
             System.err.println("Exception occurred during parsing");
@@ -93,6 +128,31 @@ public class SQLInterpreter {
         }
     }
 
+    /**
+     * Check is there * or SUM in SELECT clause.
+     * Remove SUM from selectItems to this.sumExpression.
+     * @param select_Items
+     * @return
+     */
+    public String[] checkStarAndSumThenGetSelectItems(ArrayList select_Items) {
+        String[] selectItems = ArrListToStringArr(select_Items);
+        if(selectItems[0].equals("*") || selectItems[0].contains("SUM")) return  null;
+        else if(selectItems[selectItems.length - 1].contains("SUM")){
+            System.out.println("Find SUM instruction: " + selectItems[selectItems.length - 1]);
+            this.sumExpression = selectItems[selectItems.length - 1];
+            selectItems = Arrays.copyOfRange(selectItems, 0, selectItems.length - 1);
+        }
+        return selectItems;
+    }
+
+    public boolean hasDistinct(Distinct distinct) {
+        return distinct != null;
+    }
+
+    /**
+     * Load Schema.txt into this.schema Data Structure (Hash Map).
+     * @param dbpath
+     */
     public void parseSchema(String dbpath) {
         this.schema = new HashMap<String, String[]>();
         try{
@@ -116,14 +176,53 @@ public class SQLInterpreter {
     }
 
     /**
-     * Transfer Select Items to String[]
+     * Check is there any alias.
+     * @param table
+     * @param joinTables
+     * @return
+     */
+    public boolean isHasAlias(String table, String[] joinTables){
+        if(table.contains(" ")) return true;
+        if(joinTables == null) return false;
+        for(int i = 0; i < joinTables.length; i++){
+            if(joinTables[i].contains(" ")) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Update this.schema from Full names to Aliases.
+     * Take care of self-joins
+     * (Full name / Attributes) paris still remain in the hash map, so a full name of table could still be used.
+     * @param firstTable
+     * @param joinTables
+     */
+    public void updateSchemaWithAliases(String firstTable, String[] joinTables){
+        if(firstTable.contains(" ")){
+            String[] firstTableAlias = firstTable.split(" ");
+            String[] oldValues = this.schema.get(firstTableAlias[0]);
+            this.schema.put(firstTableAlias[1], oldValues);
+            this.aliasToTable.put(firstTableAlias[1], firstTableAlias[0]);
+        }
+        if(joinTables == null) return;
+        for(int i = 0; i < joinTables.length; i++){
+            if(joinTables[i].contains(" ")){
+                String[] TableAlias = joinTables[i].split(" ");
+                String[] oldValues = this.schema.get(TableAlias[0]);
+                this.schema.put(TableAlias[1], oldValues);
+                this.aliasToTable.put(TableAlias[1], TableAlias[0]);
+            }
+        }
+    }
+
+    /**
+     * Transfer ArrayList to String[]
      * @param arrList
      * @return String[]
      */
     public String[] ArrListToStringArr(ArrayList arrList){
-        if(arrList.size() == 0) return null;
-        if(arrList.get(0) == "*") return null;
-
+        if(arrList == null) return null;
+        if(arrList.get(0) == "*") return null; // This take care of "*" and "SUM()" in SELECT clause, which tells the difference between Scan and Project operators.
         String[] strArr = new String[arrList.size()];
         for(int i = 0; i < arrList.size(); i++){
             strArr[i] = arrList.get(i).toString();
@@ -131,12 +230,28 @@ public class SQLInterpreter {
         return strArr;
     }
 
+    public String getTableAlias(String table){
+        if(table.contains(" ")){
+            return table.split(" ")[1];
+        }else return table;
+    }
+
+    public String[] getJoinTableAliases(String[] joinTable){
+        String[] aliasesArr = joinTable;
+        for(int i = 0; i < joinTable.length; i++){
+            if(joinTable[i].contains(" ")){
+                aliasesArr[i] = joinTable[i].split(" ")[1];
+            }
+        }
+        return aliasesArr;
+    }
+
     public void writeFile(String outputFile, ArrayList<Tuple> tuples){
         File oFile = new File(outputFile);
         if (!oFile.getParentFile().exists()) {
             oFile.getParentFile().mkdirs();
         }
-        System.out.println(oFile.getPath());
+        System.out.print("Write file to: " + oFile.getPath());
         try{
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(oFile));
             for(Tuple tuple:tuples){

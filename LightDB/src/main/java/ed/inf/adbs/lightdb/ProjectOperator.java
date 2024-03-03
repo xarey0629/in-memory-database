@@ -8,26 +8,33 @@ import java.util.HashMap;
 public class ProjectOperator extends Operator{
     ScanOperator scanOperator;
     SelectOperator selectOperator;
+    JoinOperator joinOperator;
     String[] columns;
     boolean isWhere;
     boolean isJoin;
 
     /**
-     * Constructor for ScanOperator.
+     * Constructor for Project Operator.
+     * Child: Scan Operator because no WHERE clause.
      * @param dbpath
      * @param schema
      * @param table
      * @param columns
      */
     ProjectOperator(String dbpath, HashMap<String,String[]> schema, String table, String[] columns){
-        this.columns = columns;
+//        if(columns[0].equals("*")) this.columns = null;
+        if(columns == null) this.columns = null;
+        else this.columns = columns;
         this.scanOperator = new ScanOperator(dbpath, schema, table);
         this.isJoin = false;
         this.isWhere = false;
     }
 
+
+
     /**
-     * Constructor for SelectOperator.
+     * Constructor for Project Operator.
+     * Child: Select Operator because WHERE clause exists.
      * @param dbpath
      * @param schema
      * @param table
@@ -35,34 +42,48 @@ public class ProjectOperator extends Operator{
      * @param whereExpression
      */
     ProjectOperator(String dbpath, HashMap<String,String[]> schema, String table, String[] columns, Expression whereExpression){
-        this.columns = columns;
+        if(columns == null) this.columns = null;
+        else this.columns = columns;
         this.selectOperator = new SelectOperator(dbpath, schema, table, whereExpression);
         this.isJoin = false;
+        this.isWhere = true;
+    }
+
+    /**
+     * Constructor for Project Operator.
+     * Child: Join Operator (to handle multiple tables).
+     * @param dbpath
+     * @param schema
+     * @param table
+     * @param joinTables
+     * @param columns
+     * @param whereExpression
+     */
+    ProjectOperator(String dbpath, HashMap<String,String[]> schema, String table, String[] joinTables, String[] columns, Expression whereExpression){
+        if(columns == null) this.columns = null;
+        else this.columns = columns;
+        this.joinOperator = new JoinOperator(dbpath, schema, table, joinTables, whereExpression);
+        this.isJoin = true;
         this.isWhere = true;
     }
 
     @Override
     Tuple getNextTuple(){
         Tuple tuple;
-        if(isWhere){
-            tuple = selectOperator.getNextTuple();
-        }else{
-            tuple = scanOperator.getNextTuple();
-        }
-        
-        if(tuple == null) return null;
+        if(isJoin)       tuple = this.joinOperator.getNextTuple();
+        else if(isWhere) tuple = this.selectOperator.getNextTuple();
+        else             tuple = this.scanOperator.getNextTuple();
 
-        if(this.columns == null){
-            return tuple;
-        }else{
-            return tuple.projectTuple(columns);
-        }
+        if(tuple == null)          return null;
+        else if(columns == null)   return tuple;
+        else                       return tuple.projectTuple(columns);
     }
 
     @Override
     void reset(){
-        if(isWhere) selectOperator.reset();
-        else scanOperator.reset();
+        if(isJoin)      joinOperator.reset();
+        if(isWhere)     selectOperator.reset();
+        else            scanOperator.reset();
     }
 
     @Override

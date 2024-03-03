@@ -14,11 +14,20 @@ public class SelectOperator extends Operator{
     ScanOperator scanOperator;
     Expression whereExpression;
 
+    /**
+     * Constructor for Select Operator
+     * @param dbpath
+     * @param schema
+     * @param table
+     * @param whereExpression
+     */
     SelectOperator(String dbpath, HashMap<String,String[]> schema, String table, Expression whereExpression){
         this.schema = schema;
         this.scanOperator = new ScanOperator(dbpath, schema, table);
         this.whereExpression = whereExpression;
     }
+
+
 
     @Override
     Tuple getNextTuple() {

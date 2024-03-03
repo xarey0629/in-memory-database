@@ -15,7 +15,7 @@ public class JoinOperator extends Operator{
     JoinOperator leftJoinOperator;
     SelectOperator leftSelectOperator;
     SelectOperator rightSelectOperator;
-    Boolean isJoinTreeBottom;
+    Boolean isJoinTreeBottom = false;
     Tuple leftTuple = null;
     Tuple rightTuple = null;
 
@@ -45,9 +45,9 @@ public class JoinOperator extends Operator{
             }else{                                  // Two tables remain -> Combine
                 this.leftSelectOperator = new SelectOperator(dbpath, schema, table, whereExpression);
 //                this.leftSelectOperator = new SelectOperator(dbpath, schema, leftJoinTables[0], whereExpression);
-                isJoinTreeBottom = true;
+                this.isJoinTreeBottom = true;
             }
-            this.rightSelectOperator = new SelectOperator(dbpath, schema, leftJoinTables[0], whereExpression);
+            this.rightSelectOperator = new SelectOperator(dbpath, schema, leftJoinTables[leftJoinTables.length - 1], whereExpression);
 //            this.rightSelectOperator = new SelectOperator(dbpath, schema, table, whereExpression);
 
     }
@@ -67,7 +67,7 @@ public class JoinOperator extends Operator{
             rightTuple = rightSelectOperator.getNextTuple();
             // The previous left tuple finished it's single nested loop join completely.
             // So get the next left tuple.
-            leftTuple = leftSelectOperator.getNextTuple();
+            leftTuple = leftOperator.getNextTuple();
         }
         // Logic to evaluate conditions.
         while(leftTuple != null && !examineTuples(leftTuple, rightTuple, leftJoinTableNames, rightTableName, whereExpression)){
@@ -78,9 +78,10 @@ public class JoinOperator extends Operator{
             if(rightTuple == null){
                 rightSelectOperator.reset();
                 rightTuple = rightSelectOperator.getNextTuple();
-                leftTuple = leftSelectOperator.getNextTuple();
+                leftTuple = leftOperator.getNextTuple();
             }
         }
+        if(leftTuple != null) System.out.println("Left tuple: " + leftTuple.printTuple() + ", Right tuple: " + rightTuple.printTuple());
         if(leftTuple == null) return null;
         else return leftTuple.join(rightTuple);
         // TODO: Project Tuple

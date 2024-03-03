@@ -16,13 +16,27 @@ public class ScanOperator extends Operator{
     FileReader fileReader;
     BufferedReader bufferedReader;
     String currLine;
-    ScanOperator(String dbpath, HashMap<String,String[]> schema, String tablename) {
+
+    /**
+     * Constructor for Scan Operator.
+     * @param dbpath
+     * @param schema
+     * @param table (hasAlias ? alias : table)
+     */
+    ScanOperator(String dbpath, HashMap<String,String[]> schema, String table) {
         this.dbPath = dbpath;
-        this.tableName = tablename;
         this.schema = schema;
-        // Read table;
-        this.tablePath = this.dbPath + "/data/" + this.tableName + ".csv";
-//        System.out.println(tablePath);
+        this.tableName = table;
+
+        // Read table
+        if(SQLInterpreter.hasAlias) this.tablePath = this.dbPath + "/data/" + SQLInterpreter.aliasToTable.get(table) + ".csv";
+        else this.tablePath = this.dbPath + "/data/" + table + ".csv";
+
+        // Print
+        System.out.printf(
+                "Read Table:\n" +
+                "Table %s, hasAlias: %s, path: %s \n", table, SQLInterpreter.hasAlias ? "True" : "False", this.tablePath
+        );
         reset();
     }
 
@@ -30,12 +44,15 @@ public class ScanOperator extends Operator{
     Tuple getNextTuple() {
         if(currLine != null){
             String[] columnNames = schema.get(tableName);
-            String[] data = currLine.split(", ");
+            String[] data = currLine.split(",");
+            for(int i = 0; i < data.length; i++){
+                data[i] = data[i].trim();
+            }
             LongValue[] values = new LongValue[columnNames.length];
             for (int i = 0; i < columnNames.length; i++){
                 values[i] = new LongValue(Integer.parseInt(data[i])); // All attributes are integers.
             }
-            // TODO: tuple
+
             Tuple t = new Tuple(tableName, columnNames, values);
             currLine = getNextLine();
             return t;

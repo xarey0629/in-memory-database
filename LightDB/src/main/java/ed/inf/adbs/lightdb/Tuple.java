@@ -2,14 +2,13 @@ package ed.inf.adbs.lightdb;
 
 import net.sf.jsqlparser.expression.LongValue;
 
-import javax.swing.table.TableColumn;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 public class Tuple {
     /**
      * A Tuple implements a hash table for storing its values.
-     * Key: table + attribute
+     * Key: "table.attribute"
      * Value: Corresponding LongValue.
      */
     LinkedHashMap<String, LongValue> tuple;
@@ -30,7 +29,7 @@ public class Tuple {
 
     /**
      * Constructor for Project Operator.
-     * @param columns
+     * @param columns: e.g. "Sailors.A", "S.B"
      * @param longValues
      */
     Tuple(String[] columns, LongValue[] longValues){
@@ -40,19 +39,52 @@ public class Tuple {
         }
     }
 
+    /**
+     * Constructor for receiving a linked hash map.
+     * @param joinedTuple
+     */
     Tuple(LinkedHashMap<String,LongValue> joinedTuple){
         this.tuple = joinedTuple;
+        System.out.println("After join: " + printTuple() + "\n");
     }
 
+    // ---------------------- Methods start from here. ----------------------
+
+    public boolean equalsTo(Tuple t2){
+        if(this.tuple.keySet().equals(t2.tuple.keySet())){
+            for(String key: this.tuple.keySet()){
+                if(!this.tuple.get(key).equals(t2.tuple.get(key))) return false;
+            }
+        }else return false;
+        return true;
+    }
+
+    /**
+     * Create a new Tuple by joining two tuples.
+     * @param rightTuple
+     * @return
+     */
     public Tuple join(Tuple rightTuple){
         LinkedHashMap<String, LongValue> joinedTuple = new LinkedHashMap<String, LongValue>(this.tuple);
         for(String key:rightTuple.tuple.keySet()){
             LongValue longValue = rightTuple.tuple.get(key);
             joinedTuple.put(key, longValue);
-//            System.out.printf("Join K/V: %s / %d \n", key, longValue.getValue());
+            System.out.printf("Join K/V: %s / %d \n", key, longValue.getValue());
         }
-//        System.out.println(printTuple());
         return new Tuple(joinedTuple);
+    }
+
+    /**
+     * Project a new tuple for SELECT clause.
+     * @param columns: e.g. "Sailors.A", "S.B"
+     * @return a new tuple on selected attributes.
+     */
+    public Tuple projectTuple(String[] columns){
+        LongValue[] longValues = new LongValue[columns.length];
+        for(int i = 0; i < columns.length; i++){
+            longValues[i] = this.tuple.get(columns[i]);
+        }
+        return new Tuple(columns, longValues);
     }
 
     /**
@@ -65,18 +97,5 @@ public class Tuple {
             output += (int)tuple.get(str).getValue() + ", ";
         }
         return output.substring(0, output.length() - 2);
-    }
-
-    /**
-     * Project a new tuple for selection.
-     * @param columns
-     * @return a new tuple on selected attributes.
-     */
-    public Tuple projectTuple(String[] columns){
-        LongValue[] longValues = new LongValue[columns.length];
-        for(int i = 0; i < columns.length; i++){
-            longValues[i] = this.tuple.get(columns[i]);
-        }
-        return new Tuple(columns, longValues);
     }
 }
