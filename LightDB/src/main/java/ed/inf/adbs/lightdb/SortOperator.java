@@ -27,7 +27,8 @@ public class SortOperator extends Operator{
      */
     SortOperator(String dbpath, HashMap<String,String[]> schema, String table, String[] joinTables, String[] columns, Expression whereExpression, String[] orderByColumns){
         this.orderByColumns = orderByColumns;
-        if(whereExpression == null)     this.projectOperator = new ProjectOperator(dbpath, schema, table, columns);
+        if(SQLInterpreter.sumExpression != null) this.projectOperator = new ProjectOperator(dbpath, schema, table, joinTables, columns, whereExpression);
+        else if(whereExpression == null)     this.projectOperator = new ProjectOperator(dbpath, schema, table, columns);
         else if(joinTables == null)     this.projectOperator = new ProjectOperator(dbpath, schema, table, columns, whereExpression);
         else                            this.projectOperator = new ProjectOperator(dbpath, schema, table, joinTables, columns, whereExpression);
     }

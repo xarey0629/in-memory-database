@@ -32,8 +32,15 @@ public class SQLInterpreter {
      * For example: aliasToTable.get("S") = "Sailors"
      */
     public static HashMap<String, String> aliasToTable = new HashMap<String, String>();
+    /**
+     * Remove Sum Expression from selectItems as sumExpression.
+     */
+    public  static String sumExpression = null;
 
-    String sumExpression = null;
+    /**
+     * Count how many NEW select items added in SUM Expression.
+     */
+    public static Integer sumItemsCounter = 0;
 
 
     /**
@@ -69,7 +76,6 @@ public class SQLInterpreter {
                 parseSchema(this.dbPath);
                 // Get Selected Attributes
                 String[] selectItems = checkStarAndSumThenGetSelectItems((ArrayList)plainSelect.getSelectItems());
-
                 // Get all Table Names.
                 String table = plainSelect.getFromItem().toString();
                 String[] leftTableNames = ArrListToStringArr((ArrayList)plainSelect.getJoins());
@@ -80,12 +86,13 @@ public class SQLInterpreter {
                 // Get DISTINCT elements
                 boolean isDistinct = hasDistinct(plainSelect.getDistinct());
                 // Get GROUP BY elements
-                String[] groupByColumns = ArrListToStringArr((ArrayList)plainSelect.getGroupBy().getGroupByExpressionList());
+                String[] groupByColumns = null;
+                if(plainSelect.getGroupBy() != null) groupByColumns = ArrListToStringArr((ArrayList)plainSelect.getGroupBy().getGroupByExpressionList());
+
 
                 // Test Select & Aliases
                 this.hasAlias = isHasAlias(table, leftTableNames);
                 if(hasAlias){
-                    // TODO:
                     //  1. Update schema with aliases.
                     //  2. Update names of tables.
                     updateSchemaWithAliases(table, leftTableNames);
@@ -113,10 +120,10 @@ public class SQLInterpreter {
 //                Operator operator = new SortOperator(this.dbPath, this.schema, table, leftTableNames, selectItems, whereExpression, orderByColumns);
 
                 // Test DuplicateEliminationOperator
-                Operator operator = new DuplicateEliminationOperator(this.dbPath, this.schema, table, leftTableNames, selectItems, whereExpression, orderByColumns, isDistinct);
+//                Operator operator = new DuplicateEliminationOperator(this.dbPath, this.schema, table, leftTableNames, selectItems, whereExpression, orderByColumns, isDistinct);
 
                 // Test SumOperator
-//                Operator operator = ...
+                Operator operator = new SumOperator(this.dbPath, this.schema, table, leftTableNames, selectItems, whereExpression, orderByColumns, isDistinct, groupByColumns, sumExpression);
 
                 // Write Output File
                 ArrayList<Tuple> tuples = operator.dump();
@@ -131,18 +138,56 @@ public class SQLInterpreter {
     /**
      * Check is there * or SUM in SELECT clause.
      * Remove SUM from selectItems to this.sumExpression.
+     * Add select items in SUM expression back to selectItems.
      * @param select_Items
      * @return
      */
     public String[] checkStarAndSumThenGetSelectItems(ArrayList select_Items) {
-        String[] selectItems = ArrListToStringArr(select_Items);
-        if(selectItems[0].equals("*") || selectItems[0].contains("SUM")) return  null;
-        else if(selectItems[selectItems.length - 1].contains("SUM")){
-            System.out.println("Find SUM instruction: " + selectItems[selectItems.length - 1]);
-            this.sumExpression = selectItems[selectItems.length - 1];
-            selectItems = Arrays.copyOfRange(selectItems, 0, selectItems.length - 1);
+        ArrayList selectItemsList = select_Items;
+        if(selectItemsList.get(0).toString().equals("*") || selectItemsList.get(0).toString().contains("SUM")) return  null;
+        // Determine SUM
+        else if(selectItemsList.get(selectItemsList.size() - 1).toString().contains("SUM")){
+            System.out.println("Find SUM instruction: " + selectItemsList.get(selectItemsList.size() - 1).toString());
+            this.sumExpression = selectItemsList.get(selectItemsList.size() - 1).toString();
+            selectItemsList.remove(selectItemsList.size() - 1);
+
+            // Add select items in SUM expression back to selectItems.
+            String sumExpress = this.sumExpression.substring(4, this.sumExpression.length() - 1);
+            this.sumExpression = sumExpress;
+            System.out.println("Sum Expression without SUM(): " + sumExpress);
+            String[] sumSelectItems = sumExpress.split("\\*");
+            for(int i = 0; i < sumSelectItems.length; i++){
+                sumSelectItems[i] = sumSelectItems[i].trim();
+            }
+            for(String str:sumSelectItems){
+                System.out.println(str);
+                if(!(str.equals("*") || isNumeric(str))){
+                    System.out.println("Find sum select item: " + str);
+                    if(selectItemsList.contains(str)){
+                        System.out.println("Sum select item already exists in selectItems.");
+                    }else{
+                        System.out.printf("Add sum select item: %s into selectItems.\n", str);
+                        selectItemsList.add(str);
+                        sumItemsCounter++;
+                    }
+                }
+            }
         }
-        return selectItems;
+        return ArrListToStringArr(selectItemsList);
+    }
+
+    /**
+     * Check a string is number or not.
+     * @param str
+     * @return
+     */
+    public static boolean isNumeric(String str) {
+        try {
+            double d = Double.parseDouble(str);
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+        return true;
     }
 
     public boolean hasDistinct(Distinct distinct) {
