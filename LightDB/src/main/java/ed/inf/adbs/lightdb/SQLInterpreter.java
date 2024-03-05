@@ -144,7 +144,7 @@ public class SQLInterpreter {
      */
     public String[] checkStarAndSumThenGetSelectItems(ArrayList select_Items) {
         ArrayList selectItemsList = select_Items;
-        if(selectItemsList.get(0).toString().equals("*") || selectItemsList.get(0).toString().contains("SUM")) return  null;
+        if(selectItemsList.get(0).toString().equals("*")) return  null;
         // Determine SUM
         else if(selectItemsList.get(selectItemsList.size() - 1).toString().contains("SUM")){
             System.out.println("Find SUM instruction: " + selectItemsList.get(selectItemsList.size() - 1).toString());
@@ -173,6 +173,7 @@ public class SQLInterpreter {
                 }
             }
         }
+        if(selectItemsList.size() == 0) return null;
         return ArrListToStringArr(selectItemsList);
     }
 

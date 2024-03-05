@@ -6,6 +6,7 @@ import net.sf.jsqlparser.expression.LongValue;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 public class SumOperator extends Operator{
     DuplicateEliminationOperator duplicateEliminationOperator;
@@ -56,43 +57,78 @@ public class SumOperator extends Operator{
 
     @Override
     ArrayList<Tuple> dump() {
-        String[] sumItems; // For a product
-        String sumItem;    // For an integer or an item.
         ArrayList<Tuple> tuples = this.duplicateEliminationOperator.dump();
+        LinkedHashSet<String> keySet = new LinkedHashSet<>();
+        String[] sumItems;          // For a product
+        String sumColItem;          // For a column
+        long sumLongItem;            // For a long
+
         if(this.isGroupBy){
             sumHashMap = new HashMap<String, Long>();
             tupleHashMap = new HashMap<String, Tuple>();
+            for(Tuple t:tuples){
+                // Key: "groupByColumns[0]+groupByColumns[1]+..."
+                // Val: Tuple
+                String key = getKey(t);
+                keySet.add(key);
+                tupleHashMap.put(key, t);
+            }
             // Determine Sum Expression
             // 1. Product
-            if(this.sumExpression.contains("*")){
-                System.out.println("Find * in Sum Expression");
-                sumItems = sumExpression.split("\\*");
-                for(int i = 0; i < sumItems.length; i++){
-                    sumItems[i] = sumItems[i].trim();
-                    System.out.println("SumItems: " + sumItems[i]);
+            if(this.isSum){
+                if(this.sumExpression.contains("*")){
+                    System.out.println("Find * in Sum Expression");
+                    sumItems = sumExpression.split("\\*");
+                    for(int i = 0; i < sumItems.length; i++){
+                        sumItems[i] = sumItems[i].trim();
+                        System.out.println("SumItems: " + sumItems[i]);
+                    }
+                    for(Tuple t:tuples){
+                        // Key: "groupByColumns[0]+groupByColumns[1]+..."
+                        String key = getKey(t);
+                        // Val: SUM
+                        // Calculate the product.
+                        long product = 1;
+                        for(String sumItem:sumItems){
+                            if(SQLInterpreter.isNumeric(sumItem)){
+                                product *= Long.parseLong(sumItem);
+                            }else product *= t.tuple.get(sumItem).getValue();
+                        }
+                        sumHashMap.put(key, sumHashMap.getOrDefault(key, (long)0) + product);
+                    }
                 }
-                for(Tuple t:tuples){
-                    //  Key: "groupByColumns[0]+groupByColumns[1]+..."
-                    //  Val: SUM
-                    String key = getKey(t);
-                    tupleHashMap.put(key, t);
-                    sumHashMap.put(key, sumHashMap.getOrDefault(key, (long)0) + t.tuple.get(sumItems[0]).getValue() * t.tuple.get(sumItems[1]).getValue());
-                }
+                // TODO
+                //  2. Integer
+                //  3. A column
+                else if(SQLInterpreter.isNumeric(this.sumExpression)){
+                    System.out.println("Find an Integer in Sum Expression");
 
+                    sumLongItem = Long.parseLong(this.sumExpression);
+                    for(Tuple t:tuples){
+                        String key = getKey(t);
+                        tupleHashMap.put(key, t);
+                        sumHashMap.put(key, sumHashMap.getOrDefault(key, (long)0) + sumLongItem);
+                    }
+                }
+                else{
+
+                }
             }
-            // TODO
-            //  2. Integer
-            //  3. A column
-
             // Produce new tuples from hashmaps
+            ArrayList<Tuple> newTuples = tuples;
             tuples.clear();
-            for(String key:sumHashMap.keySet()){
+            for(String key:keySet){
                 LinkedHashMap<String, LongValue> newLinkedHashMap = new LinkedHashMap<String, LongValue>();
-//                for(String selectItem:this.selectItems){
-                for(int i = 0; i < selectItems.length - SQLInterpreter.sumItemsCounter; i++){
-                    newLinkedHashMap.put(selectItems[i], tupleHashMap.get(key).tuple.get(selectItems[i]));
+                // Add Select Items back.
+                if(selectItems != null){
+                    for(int i = 0; i < selectItems.length - SQLInterpreter.sumItemsCounter; i++){
+                        newLinkedHashMap.put(selectItems[i], tupleHashMap.get(key).tuple.get(selectItems[i]));
+                    }
                 }
-                newLinkedHashMap.put(sumExpression, new LongValue(sumHashMap.get(key)));
+                // Add SUM item.
+                if(isSum){
+                    newLinkedHashMap.put(sumExpression, new LongValue(sumHashMap.get(key)));
+                }
                 tuples.add(new Tuple(newLinkedHashMap));
             }
         }
