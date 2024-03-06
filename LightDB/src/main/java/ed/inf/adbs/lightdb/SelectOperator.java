@@ -57,6 +57,7 @@ public class SelectOperator extends Operator{
 
 
     public boolean examineTuple(Tuple tuple, Expression whereExpression){
+        if(whereExpression == null) return true;
         MyExpressionDeParser myExpressionDeParser = new MyExpressionDeParser(tuple);
         StringBuilder stringBuilder = new StringBuilder();
         myExpressionDeParser.setBuffer(stringBuilder);

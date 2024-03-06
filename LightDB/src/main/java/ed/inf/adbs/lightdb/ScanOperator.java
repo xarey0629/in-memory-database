@@ -34,7 +34,7 @@ public class ScanOperator extends Operator{
 
         // Print
         System.out.printf(
-                "Read Table:\n" +
+                "Read Table: " +
                 "Table %s, hasAlias: %s, path: %s \n", table, SQLInterpreter.hasAlias ? "True" : "False", this.tablePath
         );
         reset();

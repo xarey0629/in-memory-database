@@ -97,7 +97,7 @@ public class SQLInterpreter {
                     //  2. Update names of tables.
                     updateSchemaWithAliases(table, leftTableNames);
                     table = getTableAlias(table);
-                    if(leftTableNames.length >= 1){
+                    if(leftTableNames != null && leftTableNames.length >= 1){
                         leftTableNames = getJoinTableAliases(leftTableNames);
                     }
 
@@ -297,7 +297,7 @@ public class SQLInterpreter {
         if (!oFile.getParentFile().exists()) {
             oFile.getParentFile().mkdirs();
         }
-        System.out.print("Write file to: " + oFile.getPath());
+        System.out.print("Write file to: " + oFile.getPath() + '\n');
         try{
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(oFile));
             for(Tuple tuple:tuples){

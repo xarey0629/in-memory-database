@@ -1,5 +1,12 @@
 /Users/edlin/Desktop/修課/UoE_Sem2/ADBS/my-in-memory-database/LightDB/src/main/java/ed/inf/adbs/lightdb/Tuple.java
 /Users/edlin/Desktop/修課/UoE_Sem2/ADBS/my-in-memory-database/LightDB/src/main/java/ed/inf/adbs/lightdb/SQLInterpreter.java
+/Users/edlin/Desktop/修課/UoE_Sem2/ADBS/my-in-memory-database/LightDB/src/main/java/ed/inf/adbs/lightdb/SelectOperator.java
 /Users/edlin/Desktop/修課/UoE_Sem2/ADBS/my-in-memory-database/LightDB/src/main/java/ed/inf/adbs/lightdb/ScanOperator.java
+/Users/edlin/Desktop/修課/UoE_Sem2/ADBS/my-in-memory-database/LightDB/src/main/java/ed/inf/adbs/lightdb/MyExpressionDeParser.java
+/Users/edlin/Desktop/修課/UoE_Sem2/ADBS/my-in-memory-database/LightDB/src/main/java/ed/inf/adbs/lightdb/SortOperator.java
+/Users/edlin/Desktop/修課/UoE_Sem2/ADBS/my-in-memory-database/LightDB/src/main/java/ed/inf/adbs/lightdb/ProjectOperator.java
+/Users/edlin/Desktop/修課/UoE_Sem2/ADBS/my-in-memory-database/LightDB/src/main/java/ed/inf/adbs/lightdb/JoinOperator.java
 /Users/edlin/Desktop/修課/UoE_Sem2/ADBS/my-in-memory-database/LightDB/src/main/java/ed/inf/adbs/lightdb/LightDB.java
+/Users/edlin/Desktop/修課/UoE_Sem2/ADBS/my-in-memory-database/LightDB/src/main/java/ed/inf/adbs/lightdb/DuplicateEliminationOperator.java
 /Users/edlin/Desktop/修課/UoE_Sem2/ADBS/my-in-memory-database/LightDB/src/main/java/ed/inf/adbs/lightdb/Operator.java
+/Users/edlin/Desktop/修課/UoE_Sem2/ADBS/my-in-memory-database/LightDB/src/main/java/ed/inf/adbs/lightdb/SumOperator.java

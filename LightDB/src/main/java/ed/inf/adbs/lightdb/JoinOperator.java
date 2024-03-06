@@ -116,6 +116,7 @@ public class JoinOperator extends Operator{
      * @return
      */
     public boolean examineTuples(Tuple leftTuple, Tuple rightTuple, String[] leftTables, String rightTable, Expression whereExpression){
+        if(whereExpression == null) return true;
         // TODO: Optimize whereExpression
         MyExpressionDeParser myExpressionDeParser = new MyExpressionDeParser(leftTuple, rightTuple, leftTables, rightTable);
         StringBuilder stringBuilder = new StringBuilder();
