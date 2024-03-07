@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * SelectOperator receives tuples from ScanOperator.
+ * SelectOperator receives tuples from the child ScanOperator.
  * SQL keyword WHERE leads to the use of SelectOperator.
  */
 public class SelectOperator extends Operator{
@@ -16,6 +16,7 @@ public class SelectOperator extends Operator{
 
     /**
      * Constructor for Select Operator
+     * Accept where expression to filter as early as possible.
      * @param dbpath
      * @param schema
      * @param table
@@ -28,7 +29,10 @@ public class SelectOperator extends Operator{
     }
 
 
-
+    /**
+     * Get a next verified tuple from Scan Operator.
+     * @return a verified tuple or null if no.
+     */
     @Override
     Tuple getNextTuple() {
         Tuple tuple = scanOperator.getNextTuple();
@@ -43,6 +47,10 @@ public class SelectOperator extends Operator{
         scanOperator.reset();
     }
 
+    /**
+     * Utilized functino getNextTuple() to get all verified tuples.
+     * @return an ArrayList<Tuple> of all verified tuples.
+     */
     @Override
     ArrayList<Tuple> dump(){
         ArrayList<Tuple> tuples = new ArrayList<Tuple>();
@@ -55,7 +63,13 @@ public class SelectOperator extends Operator{
     }
 
 
-
+    /**
+     * Examine a tuple whether it matches the whereExpression or not.
+     * This utilizes the visitor, please see details in class MyExpressionDeParser.
+     * @param tuple
+     * @param whereExpression
+     * @return true / false
+     */
     public boolean examineTuple(Tuple tuple, Expression whereExpression){
         if(whereExpression == null) return true;
         MyExpressionDeParser myExpressionDeParser = new MyExpressionDeParser(tuple);

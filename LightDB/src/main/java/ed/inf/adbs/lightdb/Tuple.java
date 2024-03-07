@@ -1,7 +1,9 @@
 package ed.inf.adbs.lightdb;
 
+import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
@@ -79,12 +81,29 @@ public class Tuple {
      * @param columns: e.g. "Sailors.A", "S.B"
      * @return a new tuple on selected attributes.
      */
-    public Tuple projectTuple(String[] columns){
-        LongValue[] longValues = new LongValue[columns.length];
-        for(int i = 0; i < columns.length; i++){
-            longValues[i] = this.tuple.get(columns[i]);
+    public Tuple projectTuple(String[] columns, String[] whereColumns, boolean isLast){
+        if(isLast || whereColumns == null){
+            LongValue[] longValues = new LongValue[columns.length];
+            for(int i = 0; i < columns.length; i++){
+                longValues[i] = this.tuple.get(columns[i]);
+            }
+            return new Tuple(columns, longValues);
         }
-        return new Tuple(columns, longValues);
+        else{
+            ArrayList<String> newColumns = new ArrayList<String>();
+            ArrayList<LongValue> longValues = new ArrayList<LongValue>();
+            for(int i = 0; i < columns.length; i++){
+                newColumns.add(columns[i]);
+                longValues.add(this.tuple.get(columns[i]));
+            }
+            for(int i = 0; i < whereColumns.length; i++){
+                if(tuple.containsKey(whereColumns[i])){
+                    newColumns.add(whereColumns[i]);
+                    longValues.add(this.tuple.get(whereColumns[i]));
+                }
+            }
+            return new Tuple(newColumns.toArray(new String[0]), longValues.toArray(new LongValue[0]) );
+        }
     }
 
     /**

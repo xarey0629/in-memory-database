@@ -9,6 +9,11 @@ import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
 import java.util.LinkedList;
 import java.util.Queue;
 
+/**
+ * This class extends ExpressionDeParser.
+ * It supports two queues to evaluate a whereExpression and query optimizing as well.
+ * We assume WHERE clause is always a conjunction(AND). Consequently, it returns false when ExpressionDeParser detects a false in a leaf whereExpression(A op B).
+ */
 public class MyExpressionDeParser extends ExpressionDeParser {
     final Queue<Long> queueValue = new LinkedList<Long>();
     final Queue<Boolean> queueBoolean = new LinkedList<Boolean>();
@@ -32,21 +37,29 @@ public class MyExpressionDeParser extends ExpressionDeParser {
      * @param leftTuple
      * @param rightTuple
      * @param leftTables
-     * @param rightTable
+     * @param rightTableName
      */
-    MyExpressionDeParser(Tuple leftTuple, Tuple rightTuple, String[] leftTables, String rightTable){
+    MyExpressionDeParser(Tuple leftTuple, Tuple rightTuple, String[] leftTables, String rightTableName){
         this.isJoin = true;
         this.tuple = leftTuple;
         this.rightTuple = rightTuple;
         this.leftTables = leftTables;
-        this.rightTable = rightTable;
+        this.rightTable = rightTableName;
     }
 
+    /**
+     * This function and followings traverse whereExpression and then deparse it.
+     * When a valued-leaf node is reached, it pushes its value into the queue,
+     * When a comparison leaf node is reached, it polls values from the queue and push the result into the queue.
+     * Note: All visiting functions is optimized to support complex predicates breaking.
+     * @param andExpression
+     */
     @Override
     public void visit(AndExpression andExpression){
+//        if(predicatesOptimization()) return;
 //        System.out.println("Visit AndExpression: " + andExpression.toString());
-
         super.visit(andExpression);
+        if(predicatesOptimization()) return;
         boolean expr1 = queueBoolean.poll();
         boolean expr2 = queueBoolean.poll();
         queueBoolean.offer(expr1 && expr2);
@@ -54,8 +67,11 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
     @Override
     public void visit(EqualsTo equalsTo){
+        if(predicatesOptimization()) return;
 //        System.out.println("Visit EqualsTo: " + equalsTo.toString());
         super.visit(equalsTo);
+        if(predicatesOptimization()) return;
+
 
         long lvalue = queueValue.poll();
         long rvalue = queueValue.poll();
@@ -72,7 +88,9 @@ public class MyExpressionDeParser extends ExpressionDeParser {
     @Override
     public void visit(NotEqualsTo notEqualsTo){
 //        System.out.println("Visit NotEqualsTo: " + notEqualsTo.toString());
+        if(predicatesOptimization()) return;
         super.visit(notEqualsTo);
+        if(predicatesOptimization()) return;
 
         long lvalue = queueValue.poll();
         long rvalue = queueValue.poll();
@@ -87,7 +105,9 @@ public class MyExpressionDeParser extends ExpressionDeParser {
     @Override
     public void visit(GreaterThan greaterThan){
 //        System.out.println("Visit GreaterThan: " + greaterThan.toString());
+        if(predicatesOptimization()) return;
         super.visit(greaterThan);
+        if(predicatesOptimization()) return;
 
         long lvalue = queueValue.poll();
         long rvalue = queueValue.poll();
@@ -103,8 +123,9 @@ public class MyExpressionDeParser extends ExpressionDeParser {
     @Override
     public void visit(GreaterThanEquals greaterThanEquals){
 //        System.out.println("Visit GreaterThanEquals: " + greaterThanEquals.toString());
-
+        if(predicatesOptimization()) return;
         super.visit(greaterThanEquals);
+        if(predicatesOptimization()) return;
 
         long lvalue = queueValue.poll();
         long rvalue = queueValue.poll();
@@ -121,7 +142,9 @@ public class MyExpressionDeParser extends ExpressionDeParser {
     @Override
     public void visit(MinorThan minorThan){
 //        System.out.println("Visit MinorThan: " + minorThan.toString());
+        if(predicatesOptimization()) return;
         super.visit(minorThan);
+        if(predicatesOptimization()) return;
 
         long lvalue = queueValue.poll();
         long rvalue = queueValue.poll();
@@ -136,9 +159,10 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
     @Override
     public void visit(MinorThanEquals minorThanEquals){
+        if(predicatesOptimization()) return;
 //        System.out.println("Visit MinorThanEquals: " + minorThanEquals.toString());
-
         super.visit(minorThanEquals);
+        if(predicatesOptimization()) return;
 
         long lvalue = queueValue.poll();
         long rvalue = queueValue.poll();
@@ -158,24 +182,29 @@ public class MyExpressionDeParser extends ExpressionDeParser {
         queueValue.offer(longValue.getValue());
     }
 
+    /**
+     * If it's under a Join Operator, we should check whether current verifying condition belongs to this subtree or not.
+     * If not, we raise a flag and assume it is true by pushing a MIN_VALUE into the queue.
+     * If yes, we can verify it.
+     * @param column
+     */
     @Override
     public void visit(Column column){
 //        System.out.println("Visit Column: " + column.toString());
+        if(predicatesOptimization()) return;
         super.visit(column);
-//        String table = column.getTable().getName();
-//        String col = column.getColumnName();
-        // TODO: Join Conditions
+        if(predicatesOptimization()) return;
+
+        // Join Conditions
         String key = column.toString();
         if(isJoin){
             if(rightTuple.tuple.containsKey(key)) queueValue.offer(rightTuple.tuple.get(key).getValue());
             else if(tuple.tuple.containsKey(key)) queueValue.offer(tuple.tuple.get(key).getValue());
-            else queueValue.offer(Long.MIN_VALUE);
+            else queueValue.offer(Long.MIN_VALUE); // This raises a flag if the current column doesn't belong to this tree level.
         }else{
             if(tuple.tuple.containsKey(key)) queueValue.offer(this.tuple.tuple.get(key).getValue());
-            else queueValue.offer(Long.MIN_VALUE);
+            else queueValue.offer(Long.MIN_VALUE); // This raises a flag if the current column doesn't belong to this tree level.
         }
-
-
     }
 
     /**
@@ -184,5 +213,18 @@ public class MyExpressionDeParser extends ExpressionDeParser {
      */
     public boolean examine(){
         return queueBoolean.poll();
+    }
+
+    /**
+     * Used to detect any false condition in predicate to optimize selection.
+     */
+    private boolean predicatesOptimization(){
+        // Predicate optimization: Break complex predicates and push down.
+        if(queueBoolean.contains(false)){
+//            System.out.println("Find false in early stage, return.");
+            queueBoolean.clear();
+            queueBoolean.offer(false);
+            return true;
+        }else return false;
     }
 }

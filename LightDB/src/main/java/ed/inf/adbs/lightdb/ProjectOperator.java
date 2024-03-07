@@ -11,6 +11,7 @@ public class ProjectOperator extends Operator{
     JoinOperator joinOperator;
     String[] columns;
     boolean isWhere;
+    String[] whereColumns = null;
     boolean isJoin;
 
     /**
@@ -47,6 +48,10 @@ public class ProjectOperator extends Operator{
         this.selectOperator = new SelectOperator(dbpath, schema, table, whereExpression);
         this.isJoin = false;
         this.isWhere = true;
+        if(whereExpression != null){
+            this.isWhere = true;
+            this.whereColumns = getWhereColumns(whereExpression);
+        }
     }
 
     /**
@@ -64,7 +69,10 @@ public class ProjectOperator extends Operator{
         else this.columns = columns;
         this.joinOperator = new JoinOperator(dbpath, schema, table, joinTables, whereExpression);
         this.isJoin = true;
-        this.isWhere = true;
+        if(whereExpression != null){
+            this.isWhere = true;
+            this.whereColumns = getWhereColumns(whereExpression);
+        }
     }
 
     @Override
@@ -76,7 +84,11 @@ public class ProjectOperator extends Operator{
 
         if(tuple == null)          return null;
         else if(columns == null)   return tuple;
-        else                       return tuple.projectTuple(columns);
+        else{
+            boolean isLast = false;
+            if(isJoin) isLast = true;
+            return tuple.projectTuple(columns, whereColumns, isLast);
+        }
     }
 
     @Override
@@ -97,6 +109,16 @@ public class ProjectOperator extends Operator{
         return tuples;
     }
 
-
+    private String[] getWhereColumns(Expression whereExpression){
+        String[] items = whereExpression.toString().split(" ");
+        ArrayList<String> whereColumns = new ArrayList<String>();
+        for(String item:items){
+            if(item.contains(".")){
+                whereColumns.add(item);
+                System.out.println("Find a whereColumn: " + item);
+            }
+        }
+        return whereColumns.toArray(new String[0]);
+    }
 
 }
