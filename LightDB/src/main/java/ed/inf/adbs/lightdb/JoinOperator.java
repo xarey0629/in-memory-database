@@ -8,6 +8,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+/**
+ * The Join Operator Class implements a left-deep join tree.
+ * Please see comments in methods for more information.
+ * For extracting JOIN conditions, please see comments of the last method.
+ */
 public class JoinOperator extends Operator{
     String[] leftJoinTableNames;
     String rightTableName;
@@ -33,23 +38,19 @@ public class JoinOperator extends Operator{
      * @param whereExpression
      */
     JoinOperator(String dbpath, HashMap<String,String[]> schema, String table, String[] leftJoinTables, Expression whereExpression){
-            this.leftJoinTableNames = leftJoinTables;
-            this.rightTableName = table;
-            this.whereExpression = whereExpression;
-            if(leftJoinTableNames.length > 1){      // Traverse left join trees.
-                String[] leftChildJoinTables = Arrays.copyOfRange(leftJoinTables, 0, leftJoinTables.length - 1);
-//                String[] leftChildJoinTables = Arrays.copyOfRange(leftJoinTables, 1, leftJoinTables.length);
-                // Create a left chill join operator.
-                this.leftJoinOperator = new JoinOperator(dbpath, schema, table, leftChildJoinTables, whereExpression);
-//                this.leftJoinOperator = new JoinOperator(dbpath, schema, leftJoinTables[0], leftChildJoinTables, whereExpression);
-            }else{                                  // Two tables remain -> Combine
-                this.leftSelectOperator = new SelectOperator(dbpath, schema, table, whereExpression);
-//                this.leftSelectOperator = new SelectOperator(dbpath, schema, leftJoinTables[0], whereExpression);
-                this.isJoinTreeBottom = true;
-            }
-            this.rightSelectOperator = new SelectOperator(dbpath, schema, leftJoinTables[leftJoinTables.length - 1], whereExpression);
-//            this.rightSelectOperator = new SelectOperator(dbpath, schema, table, whereExpression);
-
+        this.leftJoinTableNames = leftJoinTables;
+        this.rightTableName = table;
+        this.whereExpression = whereExpression;
+        if(leftJoinTableNames.length > 1){      // More than two tables -> Traverse left join trees.
+            String[] leftChildJoinTables = Arrays.copyOfRange(leftJoinTables, 0, leftJoinTables.length - 1);
+            // Create a left chill join operator.
+            this.leftJoinOperator = new JoinOperator(dbpath, schema, table, leftChildJoinTables, whereExpression);
+        }else{                                  // Two tables remain -> Combine
+            this.leftSelectOperator = new SelectOperator(dbpath, schema, table, whereExpression);
+            this.isJoinTreeBottom = true;
+        }
+        // Creat right leaf node table.
+        this.rightSelectOperator = new SelectOperator(dbpath, schema, leftJoinTables[leftJoinTables.length - 1], whereExpression);
     }
 
     @Override
@@ -84,7 +85,6 @@ public class JoinOperator extends Operator{
         if(leftTuple != null) System.out.println("Left tuple: " + leftTuple.printTuple() + ", Right tuple: " + rightTuple.printTuple());
         if(leftTuple == null) return null;
         else return leftTuple.join(rightTuple);
-        // TODO: Project Tuple
     }
 
     @Override
@@ -108,16 +108,16 @@ public class JoinOperator extends Operator{
 
     /**
      * Examine left and right tuples are under the condition or not.
-     * @param leftTuple
-     * @param rightTuple
+     * @param leftTuple outer tuple
+     * @param rightTuple inner tuple
      * @param leftTables tables in left tree
-     * @param rightTable the single table as right child node
+     * @param rightTable the single table as a right child node
      * @param whereExpression
-     * @return
+     * @return true if a tuple is satisfied
      */
     public boolean examineTuples(Tuple leftTuple, Tuple rightTuple, String[] leftTables, String rightTable, Expression whereExpression){
         if(whereExpression == null) return true;
-        // TODO: Optimize whereExpression
+        // Extract JOIN conditions by MyExpressionDeParser.
         MyExpressionDeParser myExpressionDeParser = new MyExpressionDeParser(leftTuple, rightTuple, leftTables, rightTable);
         StringBuilder stringBuilder = new StringBuilder();
         myExpressionDeParser.setBuffer(stringBuilder);

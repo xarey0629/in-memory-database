@@ -11,8 +11,16 @@ import java.util.Queue;
 
 /**
  * This class extends ExpressionDeParser.
- * It supports two queues to evaluate a whereExpression and query optimizing as well.
- * We assume WHERE clause is always a conjunction(AND). Consequently, it returns false when ExpressionDeParser detects a false in a leaf whereExpression(A op B).
+ * It supports evaluating WHERE Expression and query optimizing by implementing two queues.
+ * We assume WHERE clause is at most a conjunction(AND). Consequently, it returns false when ExpressionDeParser detects a false predicate in a leaf whereExpression(A op B).
+ *
+ * Mechanism:
+ * 1. Utilize Visitor class ExpressionDeParser and override visit functions, which extract elements from WHERE clause in a DFS order.
+ * 2. Store elements read from visitor functions into two queues, one for numeric elements another for booleans.
+ * 3. Extract either values from the numeric queue if a column or a number is found
+ * 4. Extract two numeric elements from the numeric queue and push the result into the boolean queue if a comparison operator is found.
+ *
+ * Note: More details written in comments above methods.
  */
 public class MyExpressionDeParser extends ExpressionDeParser {
     final Queue<Long> queueValue = new LinkedList<Long>();
@@ -48,9 +56,10 @@ public class MyExpressionDeParser extends ExpressionDeParser {
     }
 
     /**
-     * This function and followings traverse whereExpression and then deparse it.
-     * When a valued-leaf node is reached, it pushes its value into the queue,
-     * When a comparison leaf node is reached, it polls values from the queue and push the result into the queue.
+     * This function and the followings traverse whereExpression and then de-parse it.
+     * When a numeric leaf node is reached, it pushes its value into the numeric queue,
+     * When a comparison operator leaf node is reached, it polls values from the numeric queue and push the result into the boolean queue.
+     *
      * Note: All visiting functions is optimized to support complex predicates breaking.
      * @param andExpression
      */
@@ -183,7 +192,7 @@ public class MyExpressionDeParser extends ExpressionDeParser {
     }
 
     /**
-     * If it's under a Join Operator, we should check whether current verifying condition belongs to this subtree or not.
+     * If it's column under a Join Operator, we should check whether the current verifying column belongs to this subtree or not.
      * If not, we raise a flag and assume it is true by pushing a MIN_VALUE into the queue.
      * If yes, we can verify it.
      * @param column
@@ -208,7 +217,7 @@ public class MyExpressionDeParser extends ExpressionDeParser {
     }
 
     /**
-     * Examine an expression.
+     * Examine an expression by polling a boolean from queue.
      * @return true if verified.
      */
     public boolean examine(){
@@ -216,10 +225,11 @@ public class MyExpressionDeParser extends ExpressionDeParser {
     }
 
     /**
-     * Used to detect any false condition in predicate to optimize selection.
+     * Detect any false condition in predicate to optimize selection.
+     * @return ture if a predicate is found false (we only have conjunction).
      */
     private boolean predicatesOptimization(){
-        // Predicate optimization: Break complex predicates and push down.
+        // Predicate optimization: Break complex predicates and push them down.
         if(queueBoolean.contains(false)){
 //            System.out.println("Find false in early stage, return.");
             queueBoolean.clear();
