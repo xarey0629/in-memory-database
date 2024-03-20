@@ -12,22 +12,18 @@ import net.sf.jsqlparser.statement.select.Select;
 public class LightDB {
 
 	public static void main(String[] args) {
-
-		if (args.length != 3) {
-			System.err.println("Usage: LightDB database_dir input_file output_file");
-			return;
+		try{
+			if (args.length != 3) {
+				System.err.println("Wrong input detected.");
+				return;
+			}
+			// input: dbPath, inputFile, outputFile
+			SQLInterpreter sqlInterpreter = new SQLInterpreter(args[0], args[1], args[2]);
+			sqlInterpreter.interpret();
+		}catch (Exception e){
+			System.err.println("Exception occurred during parsing");
+			e.printStackTrace();
 		}
-
-		String databaseDir = args[0];
-		String inputFile = args[1];
-		String outputFile = args[2];
-
-		SQLInterpreter sqlInterpreter = new SQLInterpreter(databaseDir, inputFile, outputFile);
-		sqlInterpreter.interpret();
-
-
-		// Just for demonstration, replace this function call with your logic
-//		parsingExample(inputFile);
 	}
 
 	/**

@@ -4,22 +4,23 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.*;
-
-import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 
 
+/**
+ * Interpreter receives user input from cmd line and process SQL statements by creating an iterator model.
+ * It takes three inputs: dbPath, inputFile, outputFile.
+ */
 public class SQLInterpreter {
     String dbPath;
     String inputFile;
     String outputFile;
+
     /**
      * Schema use hash map DS to store TableName/An array of Attributes paris.
      * For example: schema.get("Sailors") = {A, B, C}
@@ -59,19 +60,11 @@ public class SQLInterpreter {
         // Modified from example function: parsingExample()
         try {
             Statement statement = CCJSqlParserUtil.parse(new FileReader(inputFile));
-//            Statement statement = CCJSqlParserUtil.parse("SELECT * FROM Sailors");
             if (statement != null) {
                 System.out.println("Read statement: " + statement);
                 Select select = (Select) statement;
                 PlainSelect plainSelect = (PlainSelect) select.getPlainSelect();
-                /**
-                 * Get Select Items
-                 * plainSelect.getSelectItems()
-                 * Get From Items
-                 * plainSelect.getFromItem().toString()
-                 * Get Where Items
-                 * plainSelect.getWhere() -> Expression
-                 */
+
                 // Read and Load Schema
                 parseSchema(this.dbPath);
                 // Get Selected Attributes
@@ -79,7 +72,7 @@ public class SQLInterpreter {
                 // Get all Table Names.
                 String table = plainSelect.getFromItem().toString();
                 String[] leftTableNames = ArrListToStringArr((ArrayList)plainSelect.getJoins());
-                // Get WHERE expression.
+                // Get WHERE Expression.
                 Expression whereExpression = plainSelect.getWhere();
                 // Get ORDER BY elements
                 String[] orderByColumns = ArrListToStringArr((ArrayList)plainSelect.getOrderByElements());
@@ -89,13 +82,12 @@ public class SQLInterpreter {
                 String[] groupByColumns = null;
                 if(plainSelect.getGroupBy() != null) groupByColumns = ArrListToStringArr((ArrayList)plainSelect.getGroupBy().getGroupByExpressionList());
 
-
                 // Test Select & Aliases
                 this.hasAlias = isHasAlias(table, leftTableNames);
-                if(hasAlias){
+                if(this.hasAlias){
                     //  1. Update schema with aliases.
-                    //  2. Update names of tables.
                     updateSchemaWithAliases(table, leftTableNames);
+                    //  2. Update names of tables.
                     table = getTableAlias(table);
                     if(leftTableNames != null && leftTableNames.length >= 1){
                         leftTableNames = getJoinTableAliases(leftTableNames);

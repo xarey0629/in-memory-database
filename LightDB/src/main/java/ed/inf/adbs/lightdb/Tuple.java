@@ -52,6 +52,11 @@ public class Tuple {
 
     // ---------------------- Methods start from here. ----------------------
 
+    /**
+     * Check two tuples are equal or not.
+     * @param t2
+     * @return boolean
+     */
     public boolean equalsTo(Tuple t2){
         if(this.tuple.keySet().equals(t2.tuple.keySet())){
             for(String key: this.tuple.keySet()){
@@ -92,14 +97,14 @@ public class Tuple {
         else{
             ArrayList<String> newColumns = new ArrayList<String>();
             ArrayList<LongValue> longValues = new ArrayList<LongValue>();
-            for(int i = 0; i < columns.length; i++){
-                newColumns.add(columns[i]);
-                longValues.add(this.tuple.get(columns[i]));
+            for (String column : columns) {
+                newColumns.add(column);
+                longValues.add(this.tuple.get(column));
             }
-            for(int i = 0; i < whereColumns.length; i++){
-                if(tuple.containsKey(whereColumns[i])){
-                    newColumns.add(whereColumns[i]);
-                    longValues.add(this.tuple.get(whereColumns[i]));
+            for (String whereColumn : whereColumns) {
+                if (tuple.containsKey(whereColumn)) {
+                    newColumns.add(whereColumn);
+                    longValues.add(this.tuple.get(whereColumn));
                 }
             }
             return new Tuple(newColumns.toArray(new String[0]), longValues.toArray(new LongValue[0]) );

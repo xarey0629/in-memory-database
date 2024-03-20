@@ -46,7 +46,7 @@ public class SumOperator extends Operator{
     // TODO: Implements methods getNextTuple, reset, dump and GROUP-BY.
     @Override
     Tuple getNextTuple(){
-        System.out.println("We don't use getNextTuple in Sum Operator");
+        System.out.println("We don't use getNextTuple in Sum Operator, it should be blocking");
         return null;
     }
 
@@ -65,8 +65,9 @@ public class SumOperator extends Operator{
         tupleHashMap = new HashMap<String, Tuple>();
         String[] sumItems;          // For a product
         String sumColItem;          // For a column
-        long sumLongItem;            // For a long
+        long sumLongItem;           // For a long
 
+        // Determine GROUP BY Expression
         if(this.isGroupBy){
             for(Tuple t:tuples){
                 // Key: "groupByColumns[0]+groupByColumns[1]+..."
@@ -76,16 +77,17 @@ public class SumOperator extends Operator{
                 tupleHashMap.put(key, t);
             }
         }else{
-            for(Tuple t:tuples){
-                // Key: "groupByColumns[0]+groupByColumns[1]+..."
-                // Val: Tuple
-                String key = "UNIVERSAL_KEY";
-            }
+//            for(Tuple t:tuples){
+//                // Key: "groupByColumns[0]+groupByColumns[1]+..."
+//                // Val: Tuple
+//                String key = "UNIVERSAL_KEY";
+//            }
             keySet.add("UNIVERSAL_KEY");
         }
-        // Determine Sum Expression
+
+        // Determine SUM Expression
         if(this.isSum){
-            //  1. Product
+            //  1. Products
             if(this.sumExpression.contains("*")){
                 System.out.println("Find * in Sum Expression");
                 sumItems = sumExpression.split("\\*");
@@ -94,11 +96,10 @@ public class SumOperator extends Operator{
                     System.out.println("SumItems: " + sumItems[i]);
                 }
                 for(Tuple t:tuples){
-                    // Key: "groupByColumns[0]+groupByColumns[1]+..."
                     String key;
                     if(isGroupBy) key = getKey(t);
                     else key = "UNIVERSAL_KEY";
-                    // Val: Product SUM
+
                     // Calculate the product.
                     long product = 1;
                     for(String sumItem:sumItems){
@@ -117,7 +118,6 @@ public class SumOperator extends Operator{
                     String key;
                     if(isGroupBy) key = getKey(t);
                     else key = "UNIVERSAL_KEY";
-//                    tupleHashMap.put(key, t);
                     sumHashMap.put(key, sumHashMap.getOrDefault(key, (long)0) + sumLongItem);
                 }
             }
@@ -126,51 +126,53 @@ public class SumOperator extends Operator{
                 sumColItem = sumExpression;
                 System.out.println("Find a Column in Sum Expression: " + sumColItem);
                 for(Tuple t:tuples){
-                    // Key: "groupByColumns[0]+groupByColumns[1]+..."
                     String key;
                     if(isGroupBy) key = getKey(t);
                     else key = "UNIVERSAL_KEY";
-                    // Val: SUM
                     sumHashMap.put(key, sumHashMap.getOrDefault(key, (long)0) + t.tuple.get(sumColItem).getValue());
                 }
             }
         }
+
         // Produce new tuples from hashmaps
-        ArrayList<Tuple> newTuples = tuples;
+        ArrayList<Tuple> newTuples = new ArrayList<>(tuples);
         if(this.isGroupBy){
+//            System.out.println("GroupBy");
             tuples.clear();
             for(String key:keySet){
                 LinkedHashMap<String, LongValue> newLinkedHashMap = new LinkedHashMap<String, LongValue>();
                 // Add Select Items back.
                 if(selectItems != null){
                     for(int i = 0; i < selectItems.length - SQLInterpreter.sumItemsCounter; i++){
+                        System.out.println("Put SELECT: " + selectItems[i] + " back to tuple.");
                         newLinkedHashMap.put(selectItems[i], tupleHashMap.get(key).tuple.get(selectItems[i]));
                     }
                 }
                 // Add SUM item.
                 if(isSum){
-                    newLinkedHashMap.put(sumExpression, new LongValue(sumHashMap.get(key)));
+                    newLinkedHashMap.put("SUM(" + sumExpression + ")", new LongValue(sumHashMap.get(key)));
                 }
                 tuples.add(new Tuple(newLinkedHashMap));
             }
             return tuples;
         }else{
             // SelectItems are needed.
+            newTuples.clear();
             if(selectItems.length - SQLInterpreter.sumItemsCounter > 0){
                 for(Tuple t:tuples){
                     LinkedHashMap<String, LongValue> newLinkedHashMap = new LinkedHashMap<String, LongValue>();
                     // Add Select Items back.
                     for(int i = 0; i < selectItems.length - SQLInterpreter.sumItemsCounter; i++){
+                        System.out.println("Put SELECT: " + selectItems[i] + " back to tuple.");
                         newLinkedHashMap.put(selectItems[i], t.tuple.get(selectItems[i]));
                     }
                     // Add SUM item.
                     if(isSum){
-                        newLinkedHashMap.put(sumExpression, new LongValue(sumHashMap.get("UNIVERSAL_KEY")));
+                        newLinkedHashMap.put("SUM(" + sumExpression + ")", new LongValue(sumHashMap.get("UNIVERSAL_KEY")));
                     }
                     newTuples.add(new Tuple(newLinkedHashMap));
                 }
             }else{ // No SelectItems is needed.
-                newTuples.clear();
                 LinkedHashMap<String, LongValue> newLinkedHashMap = new LinkedHashMap<String, LongValue>();
                 newLinkedHashMap.put(sumExpression, new LongValue(sumHashMap.get("UNIVERSAL_KEY")));
                 newTuples.add(new Tuple(newLinkedHashMap));
@@ -179,6 +181,11 @@ public class SumOperator extends Operator{
         }
     }
 
+    /**
+     * Get values from tuple and combine them to a group-by key.
+     * @param tuple
+     * @return group-by key string
+     */
     public String getKey(Tuple tuple){
         String key = "";
         for(String column:this.groupByColumns){
