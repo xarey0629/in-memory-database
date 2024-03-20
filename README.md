@@ -1,5 +1,4 @@
 # My In-Memory-Database
-## UoE_ADBS
 Author: He-Yi, Lin
 
 ## Explanation:
