@@ -77,11 +77,6 @@ public class SumOperator extends Operator{
                 tupleHashMap.put(key, t);
             }
         }else{
-//            for(Tuple t:tuples){
-//                // Key: "groupByColumns[0]+groupByColumns[1]+..."
-//                // Val: Tuple
-//                String key = "UNIVERSAL_KEY";
-//            }
             keySet.add("UNIVERSAL_KEY");
         }
 
@@ -96,9 +91,7 @@ public class SumOperator extends Operator{
                     System.out.println("SumItems: " + sumItems[i]);
                 }
                 for(Tuple t:tuples){
-                    String key;
-                    if(isGroupBy) key = getKey(t);
-                    else key = "UNIVERSAL_KEY";
+                    String key = getKey(t);
 
                     // Calculate the product.
                     long product = 1;
@@ -115,9 +108,7 @@ public class SumOperator extends Operator{
                 System.out.println("Find an Integer in Sum Expression");
                 sumLongItem = Long.parseLong(this.sumExpression);
                 for(Tuple t:tuples){
-                    String key;
-                    if(isGroupBy) key = getKey(t);
-                    else key = "UNIVERSAL_KEY";
+                    String key = getKey(t);
                     sumHashMap.put(key, sumHashMap.getOrDefault(key, (long)0) + sumLongItem);
                 }
             }
@@ -126,22 +117,19 @@ public class SumOperator extends Operator{
                 sumColItem = sumExpression;
                 System.out.println("Find a Column in Sum Expression: " + sumColItem);
                 for(Tuple t:tuples){
-                    String key;
-                    if(isGroupBy) key = getKey(t);
-                    else key = "UNIVERSAL_KEY";
+                    String key = getKey(t);
                     sumHashMap.put(key, sumHashMap.getOrDefault(key, (long)0) + t.tuple.get(sumColItem).getValue());
                 }
             }
         }
 
-        // Produce new tuples from hashmaps
-        ArrayList<Tuple> newTuples = new ArrayList<>(tuples);
+        // Produce new tuples by selecting proper attributes and adding SUM aggregation.
+        ArrayList<Tuple> newTuples = new ArrayList<>();
         if(this.isGroupBy){
-//            System.out.println("GroupBy");
-            tuples.clear();
             for(String key:keySet){
                 LinkedHashMap<String, LongValue> newLinkedHashMap = new LinkedHashMap<String, LongValue>();
-                // Add Select Items back.
+
+                // Add Select Items back in proper order.
                 if(selectItems != null){
                     for(int i = 0; i < selectItems.length - SQLInterpreter.sumItemsCounter; i++){
                         System.out.println("Put SELECT: " + selectItems[i] + " back to tuple.");
@@ -152,12 +140,10 @@ public class SumOperator extends Operator{
                 if(isSum){
                     newLinkedHashMap.put("SUM(" + sumExpression + ")", new LongValue(sumHashMap.get(key)));
                 }
-                tuples.add(new Tuple(newLinkedHashMap));
+                newTuples.add(new Tuple(newLinkedHashMap));
             }
-            return tuples;
         }else{
             // SelectItems are needed.
-            newTuples.clear();
             if(selectItems.length - SQLInterpreter.sumItemsCounter > 0){
                 for(Tuple t:tuples){
                     LinkedHashMap<String, LongValue> newLinkedHashMap = new LinkedHashMap<String, LongValue>();
@@ -167,9 +153,8 @@ public class SumOperator extends Operator{
                         newLinkedHashMap.put(selectItems[i], t.tuple.get(selectItems[i]));
                     }
                     // Add SUM item.
-                    if(isSum){
-                        newLinkedHashMap.put("SUM(" + sumExpression + ")", new LongValue(sumHashMap.get("UNIVERSAL_KEY")));
-                    }
+                    newLinkedHashMap.put("SUM(" + sumExpression + ")", new LongValue(sumHashMap.get("UNIVERSAL_KEY")));
+
                     newTuples.add(new Tuple(newLinkedHashMap));
                 }
             }else{ // No SelectItems is needed.
@@ -177,16 +162,18 @@ public class SumOperator extends Operator{
                 newLinkedHashMap.put(sumExpression, new LongValue(sumHashMap.get("UNIVERSAL_KEY")));
                 newTuples.add(new Tuple(newLinkedHashMap));
             }
-            return newTuples;
         }
+        return newTuples;
     }
 
     /**
      * Get values from tuple and combine them to a group-by key.
+     * If no group by, return a "UNIVERSAL_KEY";
      * @param tuple
      * @return group-by key string
      */
     public String getKey(Tuple tuple){
+        if(!isGroupBy) return "UNIVERSAL_KEY";
         String key = "";
         for(String column:this.groupByColumns){
             key += tuple.tuple.get(column).toString() + ",";
