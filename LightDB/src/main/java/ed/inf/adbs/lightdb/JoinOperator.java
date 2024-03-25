@@ -1,9 +1,7 @@
 package ed.inf.adbs.lightdb;
 
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.statement.select.Join;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -59,15 +57,14 @@ public class JoinOperator extends Operator{
         // Determine left child operator is select or join.
         if(isJoinTreeBottom) leftOperator = leftSelectOperator;
         else leftOperator = leftJoinOperator;
-        // Get tuples from left and right select operators.
+        // Get the correct outer tuple and inner tuple.
         if(leftTuple == null) leftTuple = leftOperator.getNextTuple();
         rightTuple = rightSelectOperator.getNextTuple();
-        //
+        // Inner Loop reaches the end.
         if(rightTuple == null){
             rightSelectOperator.reset();
             rightTuple = rightSelectOperator.getNextTuple();
-            // The previous left tuple finished it's single nested loop join completely.
-            // So get the next left tuple.
+            // The previous left tuple finished. It's single nested loop join completely. So get the next left tuple.
             leftTuple = leftOperator.getNextTuple();
         }
         // Logic to evaluate conditions.
@@ -108,6 +105,7 @@ public class JoinOperator extends Operator{
 
     /**
      * Examine left and right tuples are under the condition or not.
+     * JOIN conditions are extracted by class MyExpressionDeParser.
      * @param leftTuple outer tuple
      * @param rightTuple inner tuple
      * @param leftTables tables in left tree

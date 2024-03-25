@@ -3,8 +3,8 @@ Author: He-Yi, Lin
 
 ## Explanation:
 ### 1. Logic of join conditions on WHERE clause.
+- The logic of extracting JOIN conditions from the WHERE clause is specifically explained in class **MyExpressionDeParser**.
 - How join operators work is explained in class **JoinOperator**.
-- The mechanism of extracting JOIN conditions from the WHERE clause is specifically explained in class **myExpressionDeParser**.
 
 ### 2. Optimization Rules
 1. Filter as early as possible (selection push-down): 
