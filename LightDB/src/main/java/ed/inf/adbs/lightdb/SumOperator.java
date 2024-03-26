@@ -46,7 +46,7 @@ public class SumOperator extends Operator{
     // TODO: Implements methods getNextTuple, reset, dump and GROUP-BY.
     @Override
     Tuple getNextTuple(){
-        System.out.println("We don't use getNextTuple in Sum Operator, it should be blocking");
+//        System.out.println("We don't use getNextTuple in Sum Operator, it should be blocking");
         return null;
     }
 
@@ -84,11 +84,11 @@ public class SumOperator extends Operator{
         if(this.isSum){
             //  1. Products
             if(this.sumExpression.contains("*")){
-                System.out.println("Find * in Sum Expression");
+//                System.out.println("Find * in Sum Expression");
                 sumItems = sumExpression.split("\\*");
                 for(int i = 0; i < sumItems.length; i++){
                     sumItems[i] = sumItems[i].trim();
-                    System.out.println("SumItems: " + sumItems[i]);
+//                    System.out.println("SumItems: " + sumItems[i]);
                 }
                 for(Tuple t:tuples){
                     String key = getKey(t);
@@ -105,7 +105,7 @@ public class SumOperator extends Operator{
             }
             //  2. An Integer
             else if(SQLInterpreter.isNumeric(this.sumExpression)){
-                System.out.println("Find an Integer in Sum Expression");
+//                System.out.println("Find an Integer in Sum Expression");
                 sumLongItem = Long.parseLong(this.sumExpression);
                 for(Tuple t:tuples){
                     String key = getKey(t);
@@ -115,7 +115,7 @@ public class SumOperator extends Operator{
             //  3. A column
             else{
                 sumColItem = sumExpression;
-                System.out.println("Find a Column in Sum Expression: " + sumColItem);
+//                System.out.println("Find a Column in Sum Expression: " + sumColItem);
                 for(Tuple t:tuples){
                     String key = getKey(t);
                     sumHashMap.put(key, sumHashMap.getOrDefault(key, (long)0) + t.tuple.get(sumColItem).getValue());
@@ -132,7 +132,7 @@ public class SumOperator extends Operator{
                 // Add Select Items back in proper order.
                 if(selectItems != null){
                     for(int i = 0; i < selectItems.length - SQLInterpreter.sumItemsCounter; i++){
-                        System.out.println("Put SELECT: " + selectItems[i] + " back to tuple.");
+//                        System.out.println("Put SELECT: " + selectItems[i] + " back to tuple.");
                         newLinkedHashMap.put(selectItems[i], tupleHashMap.get(key).tuple.get(selectItems[i]));
                     }
                 }
@@ -149,7 +149,7 @@ public class SumOperator extends Operator{
                     LinkedHashMap<String, LongValue> newLinkedHashMap = new LinkedHashMap<String, LongValue>();
                     // Add Select Items back.
                     for(int i = 0; i < selectItems.length - SQLInterpreter.sumItemsCounter; i++){
-                        System.out.println("Put SELECT: " + selectItems[i] + " back to tuple.");
+//                        System.out.println("Put SELECT: " + selectItems[i] + " back to tuple.");
                         newLinkedHashMap.put(selectItems[i], t.tuple.get(selectItems[i]));
                     }
                     // Add SUM item.
@@ -179,7 +179,7 @@ public class SumOperator extends Operator{
             key += tuple.tuple.get(column).toString() + ",";
         }
         key = key.substring(0, key.length() - 1);
-        System.out.println("GroupBy: Get new key: " + key);
+//        System.out.println("GroupBy: Get new key: " + key);
         return key;
     }
 }

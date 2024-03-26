@@ -115,7 +115,7 @@ public class ProjectOperator extends Operator{
         for(String item:items){
             if(item.contains(".")){
                 whereColumns.add(item);
-                System.out.println("Find a whereColumn: " + item);
+//                System.out.println("Find a whereColumn: " + item);
             }
         }
         return whereColumns.toArray(new String[0]);

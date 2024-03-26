@@ -37,9 +37,9 @@ public class LightDB {
 			Statement statement = CCJSqlParserUtil.parse(new FileReader(filename));
 //            Statement statement = CCJSqlParserUtil.parse("SELECT * FROM Boats");
 			if (statement != null) {
-				System.out.println("Read statement: " + statement);
+//				System.out.println("Read statement: " + statement);
 				Select select = (Select) statement;
-				System.out.println("Select body is " + select.getSelectBody());
+//				System.out.println("Select body is " + select.getSelectBody());
 			}
 		} catch (Exception e) {
 			System.err.println("Exception occurred during parsing");

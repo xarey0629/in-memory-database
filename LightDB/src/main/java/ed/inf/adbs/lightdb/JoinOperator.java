@@ -79,7 +79,7 @@ public class JoinOperator extends Operator{
                 leftTuple = leftOperator.getNextTuple();
             }
         }
-        if(leftTuple != null) System.out.println("Left tuple: " + leftTuple.printTuple() + ", Right tuple: " + rightTuple.printTuple());
+//        if(leftTuple != null) System.out.println("Left tuple: " + leftTuple.printTuple() + ", Right tuple: " + rightTuple.printTuple());
         if(leftTuple == null) return null;
         else return leftTuple.join(rightTuple);
     }

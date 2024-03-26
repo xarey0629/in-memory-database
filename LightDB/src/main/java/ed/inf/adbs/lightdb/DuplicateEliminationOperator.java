@@ -16,7 +16,7 @@ public class DuplicateEliminationOperator extends Operator{
 
     @Override
     Tuple getNextTuple(){
-        System.out.println("DuplicateEliminationOperator's getNextTuple doesn't have real meaning, please use its child Project Operator.");
+//        System.out.println("DuplicateEliminationOperator's getNextTuple doesn't have real meaning, please use its child Project Operator.");
         return null;
     }
 

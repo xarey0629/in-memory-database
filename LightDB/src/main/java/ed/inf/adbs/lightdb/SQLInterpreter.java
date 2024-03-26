@@ -61,7 +61,7 @@ public class SQLInterpreter {
         try {
             Statement statement = CCJSqlParserUtil.parse(new FileReader(inputFile));
             if (statement != null) {
-                System.out.println("Read statement: " + statement);
+//                System.out.println("Read statement: " + statement);
                 Select select = (Select) statement;
                 PlainSelect plainSelect = (PlainSelect) select.getPlainSelect();
 
@@ -139,26 +139,26 @@ public class SQLInterpreter {
         if(selectItemsList.get(0).toString().equals("*")) return  null;
         // Determine SUM
         else if(selectItemsList.get(selectItemsList.size() - 1).toString().contains("SUM")){
-            System.out.println("Find SUM instruction: " + selectItemsList.get(selectItemsList.size() - 1).toString());
+//            System.out.println("Find SUM instruction: " + selectItemsList.get(selectItemsList.size() - 1).toString());
             this.sumExpression = selectItemsList.get(selectItemsList.size() - 1).toString();
             selectItemsList.remove(selectItemsList.size() - 1);
 
             // Add select items in SUM expression back to selectItems.
             String sumExpress = this.sumExpression.substring(4, this.sumExpression.length() - 1);
             this.sumExpression = sumExpress;
-            System.out.println("Sum Expression without SUM(): " + sumExpress);
+//            System.out.println("Sum Expression without SUM(): " + sumExpress);
             String[] sumSelectItems = sumExpress.split("\\*");
             for(int i = 0; i < sumSelectItems.length; i++){
                 sumSelectItems[i] = sumSelectItems[i].trim();
             }
             for(String str:sumSelectItems){
-                System.out.println(str);
+//                System.out.println(str);
                 if(!(str.equals("*") || isNumeric(str))){
-                    System.out.println("Find sum select item: " + str);
+//                    System.out.println("Find sum select item: " + str);
                     if(selectItemsList.contains(str)){
-                        System.out.println("Sum select item already exists in selectItems.");
+//                        System.out.println("Sum select item already exists in selectItems.");
                     }else{
-                        System.out.printf("Add sum select item: %s into selectItems.\n", str);
+//                        System.out.printf("Add sum select item: %s into selectItems.\n", str);
                         selectItemsList.add(str);
                         sumItemsCounter++;
                     }
@@ -289,7 +289,7 @@ public class SQLInterpreter {
         if (!oFile.getParentFile().exists()) {
             oFile.getParentFile().mkdirs();
         }
-        System.out.print("Write file to: " + oFile.getPath() + '\n');
+//        System.out.print("Write file to: " + oFile.getPath() + '\n');
         try{
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(oFile));
             for(Tuple tuple:tuples){

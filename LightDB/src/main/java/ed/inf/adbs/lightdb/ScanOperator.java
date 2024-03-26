@@ -33,10 +33,10 @@ public class ScanOperator extends Operator{
         else this.tablePath = this.dbPath + "/data/" + table + ".csv";
 
         // Print
-        System.out.printf(
-                "Read Table: " +
-                "Table %s, hasAlias: %s, path: %s \n", table, SQLInterpreter.hasAlias ? "True" : "False", this.tablePath
-        );
+//        System.out.printf(
+//                "Read Table: " +
+//                "Table %s, hasAlias: %s, path: %s \n", table, SQLInterpreter.hasAlias ? "True" : "False", this.tablePath
+//        );
         reset();
     }
 

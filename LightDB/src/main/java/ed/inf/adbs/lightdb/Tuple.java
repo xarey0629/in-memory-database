@@ -47,7 +47,7 @@ public class Tuple {
      */
     Tuple(LinkedHashMap<String,LongValue> joinedTuple){
         this.tuple = joinedTuple;
-        System.out.println("After join: " + printTuple() + "\n");
+//        System.out.println("After join: " + printTuple() + "\n");
     }
 
     // ---------------------- Methods start from here. ----------------------
@@ -76,7 +76,7 @@ public class Tuple {
         for(String key:rightTuple.tuple.keySet()){
             LongValue longValue = rightTuple.tuple.get(key);
             joinedTuple.put(key, longValue);
-            System.out.printf("Join K/V: %s / %d \n", key, longValue.getValue());
+//            System.out.printf("Join K/V: %s / %d \n", key, longValue.getValue());
         }
         return new Tuple(joinedTuple);
     }
