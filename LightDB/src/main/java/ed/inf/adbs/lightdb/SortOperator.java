@@ -66,7 +66,7 @@ public class SortOperator extends Operator{
      */
     public ArrayList<Tuple> sort(ArrayList<Tuple> tuples){
         if(tuples == null || orderByColumns == null) return null;
-        ArrayList<Tuple> sortedTuples = tuples;
+        ArrayList<Tuple> sortedTuples = new ArrayList<Tuple>(tuples);
         Collections.sort(sortedTuples, new Comparator<Tuple>() {
             @Override
             public int compare(Tuple t1, Tuple t2){

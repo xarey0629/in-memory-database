@@ -38,7 +38,7 @@ public class SelectOperator extends Operator{
         Tuple tuple = scanOperator.getNextTuple();
         while(tuple != null && !examineTuple(tuple, whereExpression)){
             tuple = scanOperator.getNextTuple();
-        };
+        }
         return tuple;
     }
 
@@ -48,7 +48,7 @@ public class SelectOperator extends Operator{
     }
 
     /**
-     * Utilized functino getNextTuple() to get all verified tuples.
+     * Utilized function getNextTuple() to get all verified tuples.
      * @return an ArrayList<Tuple> of all verified tuples.
      */
     @Override

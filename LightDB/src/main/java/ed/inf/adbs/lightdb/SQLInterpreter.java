@@ -165,7 +165,7 @@ public class SQLInterpreter {
                 }
             }
         }
-        if(selectItemsList.size() == 0) return null;
+        if(selectItemsList.isEmpty()) return null;
         return ArrListToStringArr(selectItemsList);
     }
 
