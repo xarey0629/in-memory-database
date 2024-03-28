@@ -33,6 +33,7 @@ public class SQLInterpreter {
      * For example: aliasToTable.get("S") = "Sailors"
      */
     public static HashMap<String, String> aliasToTable = new HashMap<String, String>();
+
     /**
      * Remove Sum Expression from selectItems as sumExpression.
      */
@@ -56,16 +57,20 @@ public class SQLInterpreter {
         this.outputFile = outputfile;
     }
 
+    /**
+     * Parse the query and get each clause, then execute the operator.
+     * See comments inside.
+     */
     public void interpret(){
         // Modified from example function: parsingExample()
         try {
             Statement statement = CCJSqlParserUtil.parse(new FileReader(inputFile));
             if (statement != null) {
 //                System.out.println("Read statement: " + statement);
+                // Get PlainSelect to parse.
                 Select select = (Select) statement;
                 PlainSelect plainSelect = (PlainSelect) select.getPlainSelect();
-
-                // Read and Load Schema
+                // Read and Load Schema.
                 parseSchema(this.dbPath);
                 // Get Selected Attributes
                 String[] selectItems = checkStarAndSumThenGetSelectItems((ArrayList)plainSelect.getSelectItems());
@@ -82,7 +87,7 @@ public class SQLInterpreter {
                 String[] groupByColumns = null;
                 if(plainSelect.getGroupBy() != null) groupByColumns = ArrListToStringArr((ArrayList)plainSelect.getGroupBy().getGroupByExpressionList());
 
-                // Test Select & Aliases
+                // Get Aliases if needed.
                 this.hasAlias = isHasAlias(table, leftTableNames);
                 if(this.hasAlias){
                     //  1. Update schema with aliases.
@@ -100,10 +105,6 @@ public class SQLInterpreter {
                 // Test ProjectOperator
 //                Operator operator = new ProjectOperator(this.dbPath, this.schema, table, selectItems);
 //                Operator operator = new ProjectOperator(this.dbPath, this.schema, table, selectItems, whereExpression);
-
-                // TODO: Decide when to use ScanOperator, SelectOperator or ProjectOperator.
-                // TODO: selectItems = null if Select *
-                // TODO: whereExpression = null if no WHERE clause
 
                 // Test JoinOperator
 //                Operator operator = new JoinOperator(this.dbPath, this.schema, table, leftTableNames, whereExpression);
@@ -130,9 +131,9 @@ public class SQLInterpreter {
     /**
      * Check is there * or SUM in SELECT clause.
      * Remove SUM from selectItems to this.sumExpression.
-     * Add select items in SUM expression back to selectItems.
-     * @param select_Items
-     * @return
+     * Add selected attribute in SUM expression back to selectItems to cascade projection.
+     * @param select_Items original select items.
+     * @return select items including attributes in SUM, but not whole SUM expression.
      */
     public String[] checkStarAndSumThenGetSelectItems(ArrayList select_Items) {
         ArrayList selectItemsList = select_Items;
@@ -183,12 +184,18 @@ public class SQLInterpreter {
         return true;
     }
 
+    /**
+     * Check the existence of DISTINCT expression.
+     * @param distinct
+     * @return
+     */
     public boolean hasDistinct(Distinct distinct) {
         return distinct != null;
     }
 
     /**
-     * Load Schema.txt into this.schema Data Structure (Hash Map).
+     * Load Schema.txt into this.schema.
+     * Data Structure -> (Hash Map).
      * @param dbpath
      */
     public void parseSchema(String dbpath) {
@@ -268,12 +275,22 @@ public class SQLInterpreter {
         return strArr;
     }
 
+    /**
+     * Get the alias of table.
+     * @param table: table name + Alias.
+     * @return Alias if existing, or its original name.
+     */
     public String getTableAlias(String table){
         if(table.contains(" ")){
             return table.split(" ")[1];
         }else return table;
     }
 
+    /**
+     * Get aliases of tables.
+     * @param joinTable: List of tables.
+     * @return Alias if existing, or its original name.
+     */
     public String[] getJoinTableAliases(String[] joinTable){
         String[] aliasesArr = joinTable;
         for(int i = 0; i < joinTable.length; i++){
@@ -284,6 +301,11 @@ public class SQLInterpreter {
         return aliasesArr;
     }
 
+    /**
+     * Write all tuples into a csv file.
+     * @param outputFile
+     * @param tuples
+     */
     public void writeFile(String outputFile, ArrayList<Tuple> tuples){
         File oFile = new File(outputFile);
         if (!oFile.getParentFile().exists()) {

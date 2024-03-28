@@ -1,10 +1,8 @@
 package ed.inf.adbs.lightdb;
 
-import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 public class Tuple {
@@ -82,7 +80,7 @@ public class Tuple {
     }
 
     /**
-     * Project a new tuple for SELECT clause.
+     * Project a new tuple for SELECT clause including needed attributes in WHERE clause.
      * @param columns: e.g. "Sailors.A", "S.B"
      * @return a new tuple on selected attributes.
      */

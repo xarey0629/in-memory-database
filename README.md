@@ -3,7 +3,7 @@ Author: He-Yi, Lin
 
 ## Explanation:
 ### 1. Logic of join conditions on WHERE clause.
-- The logic of extracting JOIN conditions from the WHERE clause is specifically explained in class **MyExpressionDeParser**.
+- The logic of extracting **JOIN** conditions from the WHERE clause is specifically explained in class **MyExpressionDeParser**.
 - How join operators work is explained in class **JoinOperator**.
 
 ### 2. Optimization Rules
@@ -29,3 +29,4 @@ Author: He-Yi, Lin
 ### 3. Other things to know
 - A hashmap-based data structure **tuple** contributes a lot, details explained in class **Tuple**. The tuple contains most required information to match extracted join condition, which relieves pressure of other components in the system to tracing necessary information. 
 - The operating mechanism of this database system is explained by the comments anywhere.
+- **All variable and function names are given as clearly as possible to reduce the redundancy of comments and explanation. For instance, I suppose a function is clear enough to understand by their names if it doesn't have much explanation.**

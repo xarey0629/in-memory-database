@@ -40,6 +40,10 @@ public class ScanOperator extends Operator{
         reset();
     }
 
+    /**
+     * Read schema and read values from the .csv file.
+     * @return a tuple
+     */
     @Override
     Tuple getNextTuple() {
         if(currLine != null){
@@ -52,14 +56,13 @@ public class ScanOperator extends Operator{
             for (int i = 0; i < columnNames.length; i++){
                 values[i] = new LongValue(Integer.parseInt(data[i])); // All attributes are integers.
             }
-
+            // Construct a tuple.
             Tuple t = new Tuple(tableName, columnNames, values);
             currLine = getNextLine();
             return t;
         }
-        else{
-            return null;
-        }
+        return null;
+
     }
     @Override
     void reset(){

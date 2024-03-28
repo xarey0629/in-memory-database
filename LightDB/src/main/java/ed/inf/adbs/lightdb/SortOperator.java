@@ -33,7 +33,7 @@ public class SortOperator extends Operator{
         else                            this.projectOperator = new ProjectOperator(dbpath, schema, table, joinTables, columns, whereExpression);
     }
 
-
+    // Blocking operation.
     @Override
     Tuple getNextTuple(){
 //        System.out.println("SortOperator's getNextTuple doesn't have real meaning, please use its child Project Operator.");
@@ -60,7 +60,9 @@ public class SortOperator extends Operator{
     }
 
     /**
-     * Sort Tuples from project operator;
+     * Sort Tuples from project operator by the order of SortBy columns;
+     * Self-defined comparator: Compare each column lexicographically.
+     * Get the values by hash map inside each tuple using column names as keys.
      * @param tuples
      * @return sorted tuples
      */

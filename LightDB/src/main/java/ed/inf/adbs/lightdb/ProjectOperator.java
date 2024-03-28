@@ -75,6 +75,11 @@ public class ProjectOperator extends Operator{
         }
     }
 
+    /**
+     * Get a filtered tuple from correct child operator.
+     * isLast: is after join operator or not.
+     * @return filtered tuple
+     */
     @Override
     Tuple getNextTuple(){
         Tuple tuple;
@@ -83,7 +88,7 @@ public class ProjectOperator extends Operator{
         else             tuple = this.scanOperator.getNextTuple();
 
         if(tuple == null)          return null;
-        else if(columns == null)   return tuple;
+        else if(columns == null)   return tuple; // SELECT *
         else{
             boolean isLast = false;
             if(isJoin) isLast = true;
@@ -109,6 +114,11 @@ public class ProjectOperator extends Operator{
         return tuples;
     }
 
+    /**
+     * Extract attributes in WHERE clause.
+     * @param whereExpression
+     * @return A list of needed column attributes.
+     */
     private String[] getWhereColumns(Expression whereExpression){
         String[] items = whereExpression.toString().split(" ");
         ArrayList<String> whereColumns = new ArrayList<String>();

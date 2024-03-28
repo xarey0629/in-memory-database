@@ -57,7 +57,7 @@ public class MyExpressionDeParser extends ExpressionDeParser {
     }
 
     /**
-     * The following methods traverse whereExpression and then de-parse it by using visitor.
+     * The following visiting methods traverse whereExpression and then de-parse it by using visitor.
      * When a numeric leaf node is reached, it pushes its value into the numeric queue,
      * When a comparison operator leaf node is reached, it polls values from the numeric queue and push the result into the boolean queue.
      * For attributes handling, please see function visit(Column).
@@ -69,8 +69,8 @@ public class MyExpressionDeParser extends ExpressionDeParser {
     public void visit(AndExpression andExpression) {
 //        if(predicatesOptimization()) return;
 //        System.out.println("Visit AndExpression: " + andExpression.toString());
-        super.visit(andExpression);
-        if (predicatesOptimization()) return;
+        super.visit(andExpression);             // Utilize visitor.
+        if (predicatesOptimization()) return;   // Check the existence of false -> optimization.
         boolean expr1 = boolQueue.poll();
         boolean expr2 = boolQueue.poll();
         boolQueue.offer(expr1 && expr2);
@@ -203,7 +203,6 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
     /**
      * Examine an expression by polling a boolean from queue.
-     *
      * @return true if verified.
      */
     public boolean examine() {
@@ -212,7 +211,6 @@ public class MyExpressionDeParser extends ExpressionDeParser {
 
     /**
      * Detect any false condition in predicate to optimize selection.
-     *
      * @return ture if a predicate is found false (we only have conjunction).
      */
     private boolean predicatesOptimization() {

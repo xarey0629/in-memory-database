@@ -22,8 +22,8 @@ public class SumOperator extends Operator{
      * Constructor for Sum Operator, whose child is duplicateEliminationOperator;
      * @param dbpath
      * @param schema
-     * @param table
-     * @param joinTables
+     * @param table right single child table in left-deep tree(on the right side).
+     * @param joinTables rest of tables on the left side.
      * @param columns
      * @param whereExpression
      * @param orderByColumns
@@ -43,7 +43,7 @@ public class SumOperator extends Operator{
         }
     }
 
-    // TODO: Implements methods getNextTuple, reset, dump and GROUP-BY.
+    // It's blocking, we don't get single tuple.
     @Override
     Tuple getNextTuple(){
 //        System.out.println("We don't use getNextTuple in Sum Operator, it should be blocking");
@@ -55,6 +55,11 @@ public class SumOperator extends Operator{
         this.duplicateEliminationOperator.reset();
     }
 
+    /**
+     * Get all the tuples.
+     * Logic is explained in comments inside.
+     * @return grouped tuples or aggregation.
+     */
     @Override
     ArrayList<Tuple> dump() {
         ArrayList<Tuple> tuples = this.duplicateEliminationOperator.dump();

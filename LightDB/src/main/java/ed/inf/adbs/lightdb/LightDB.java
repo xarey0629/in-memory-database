@@ -17,6 +17,7 @@ public class LightDB {
 				System.err.println("Wrong input detected.");
 				return;
 			}
+			// Create an interpreter to execute the query.
 			// input: dbPath, inputFile, outputFile
 			SQLInterpreter sqlInterpreter = new SQLInterpreter(args[0], args[1], args[2]);
 			sqlInterpreter.interpret();

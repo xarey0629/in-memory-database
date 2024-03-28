@@ -14,6 +14,7 @@ public class DuplicateEliminationOperator extends Operator{
         this.isDistinct = isDistinct;
     }
 
+    // It's blocking, we don't get single tuple.
     @Override
     Tuple getNextTuple(){
 //        System.out.println("DuplicateEliminationOperator's getNextTuple doesn't have real meaning, please use its child Project Operator.");
@@ -32,9 +33,13 @@ public class DuplicateEliminationOperator extends Operator{
         else return tuples;
     }
 
+    /**
+     * Check each tuple is equal to the previous one(in the sorted order).
+     * @param sortedTuples
+     * @return unique tuples.
+     */
     public ArrayList<Tuple> eliminateDuplicates(ArrayList<Tuple> sortedTuples){
         if(sortedTuples == null) return null;
-        // TODO: Determine whether two tuples are different or not.
         ArrayList<Tuple> uniqueTuples = new ArrayList<Tuple>();
         Tuple currTuple = sortedTuples.get(0);
         for(int i = 1; i < sortedTuples.size(); i++){
